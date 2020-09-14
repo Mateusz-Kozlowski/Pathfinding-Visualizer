@@ -1,6 +1,6 @@
 # Pathfinding-Visualizer
 
-Pathfiding Visualizer is one of my first projects, so it isn't written in the best way. The code isn't very clean and the program isn't easily extensible. I plan to improve the code and rebuild the project in the future, but it won't be too soon.
+Pathfiding Visualizer is one of my first Python projects, so it isn't written in the best way. The code isn't very clean and the program isn't easily extensible. I plan to improve the code and rebuild the project in the future, but it won't be too soon.
 
 This file includes the following chapters:
 1. Code Requirements
