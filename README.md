@@ -11,6 +11,7 @@ Python 3.8 with following modules installed:
 * Pygame 1.9
 
 # 2. Project Description:
+Comming soon!
 
 # 3. How to install:
 If you're familiar with git you can clone the repo. Otherwise you can simply download whole project as a compressed folder.
