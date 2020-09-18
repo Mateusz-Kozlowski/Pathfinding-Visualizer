@@ -13,7 +13,7 @@ Python 3.8 with following modules installed:
 * Pygame 1.9
 
 # 2. Project Description:
-Comming soon!
+Comming soon! (or rather after the next update, so not soon)
 
 # 3. How to install:
 If you're familiar with git you can clone the repo. Otherwise you can simply download whole project as a compressed folder.
@@ -32,4 +32,4 @@ And you should see sth like that:
 (comming soon!)
 
 # 4. Tips:
-Comming soon!
+Comming soon! (or rather after the next update, so not soon)
