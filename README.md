@@ -32,4 +32,4 @@ And you should see sth like that:
 (comming soon!)
 
 # 4. Tips:
-Comming soon! (or rather after the next update, so not soon)
+Comming soon! (or rather after the next update, so not soon) 
