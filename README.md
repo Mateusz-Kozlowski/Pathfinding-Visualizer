@@ -1,5 +1,7 @@
 # Pathfinding-Visualizer
 
+Pathfiding Visualizer is my first Python project, so it isn't written in the best way. The code isn't very clean and the program isn't easily extensible. I plan to improve the code and rebuild the project in the future, but it won't be too soon.
+
 This file includes the following chapters:
 1. Code Requirements
 2. Project description
@@ -11,6 +13,7 @@ Python 3.8 with following modules installed:
 * Pygame 1.9
 
 # 2. Project Description:
+Comming soon! (or rather after the next update, so not soon)
 
 # 3. How to install:
 If you're familiar with git you can clone the repo. Otherwise you can simply download whole project as a compressed folder.
@@ -29,3 +32,4 @@ And you should see sth like that:
 (comming soon!)
 
 # 4. Tips:
+Comming soon! (or rather after the next update, so not soon) 
