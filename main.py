@@ -7,6 +7,7 @@ import pygame as pg
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (0, 30)
 pg.init()
 
+# Colors:
 WHITE = (255, 255, 255)
 GREY240 = (240, 240, 240)
 GREY224 = (224, 224, 224)
@@ -30,884 +31,911 @@ AQUA = (0, 255, 255)
 LIGHT_BLUE = (50, 220, 255)
 GREEN_AQUA = (0, 255, 200)
 
+# Some constants:
 BACKGROUND_COLOR = GREY240
-
-FPS = 30
-GRAPH_WIDTH = 736
-GRAPH_HEIGHT = 736
-COLUMNS = 23
-ROWS = 23
-NODE_WIDTH = 32
-TOP_MARGIN = 16
+FPS = 60
 LEFT_MARGIN = 16
-WIDTH = 3 * LEFT_MARGIN + GRAPH_WIDTH + 160
+TOP_MARGIN = 16
+WIDTH = 944
 HEIGHT = 768
-
-ALGORITHMS = ['BFS', 'DFS', 'A*', 'DIJKSTRA']
-NODE_TYPES = ['DEFAULT', 'BARRIER', 'START', 'END']
-STATES_COLORS = {
-    "DEFAULT": GREY224,
-    "BARRIER": BLACK,
-    "START": ORANGE,
-    "IN QUEUE": AQUA,
-    "ACTIVE": AQUA,
-    "CLOSED": LIGHT_BLUE,
-    "END": RED,
-    "PATH ELEMENT": YELLOW
-}
+TITLE = "PATHFINDING VISUALIZER"
 
 window = pg.display.set_mode((WIDTH, HEIGHT))
-pg.display.set_caption("PATHFINDING VISUALIZER")
-clock = pg.time.Clock()
+pg.display.set_caption(TITLE)
 
 
 class Button:
-    def __init__(
-        self, x_pos, y_pos, width, height,
-        idle_color, hover_color, pressed_color,
-        outline_thickness, text_color,
-        char_size, text='', font='arial'
-    ):
-        self.xPos = int(x_pos)
-        self.yPos = int(y_pos)
-        self.width = int(width)
-        self.height = int(height)
-        self.idleColor = idle_color
-        self.hoverColor = hover_color
-        self.pressedColor = pressed_color
-        self.lightOutlineColor = WHITE
-        self.darkOutlineColor = BLACK
-        self.outlineThickness = outline_thickness
-        self.textColor = text_color
-        self.charSize = char_size
-        self.text = text
-        self.font = font
-        self.over = False
-        self.clicked = False
-        self.pressed = False
+	def __init__(
+			self, x_pos, y_pos, width, height,
+			idle_color, hover_color, pressed_color,
+			outline_thickness, text_color,
+			char_size, text='', font='arial'
+	):
+		self.xPos = int(x_pos)
+		self.yPos = int(y_pos)
+		self.width = int(width)
+		self.height = int(height)
+		self.idleColor = idle_color
+		self.hoverColor = hover_color
+		self.pressedColor = pressed_color
+		self.outlineThickness = outline_thickness
+		self.textColor = text_color
+		self.charSize = char_size
+		self.text = text
+		self.font = font
+		self.over = False
+		self.clicked = False
+		self.pressed = False
+		self.lightOutlineColor = WHITE
+		self.darkOutlineColor = BLACK
 
-    def update(self, pos):
-        self.clicked = False
-        if self.xPos < pos[0] < self.xPos + self.width and self.yPos < pos[1] < self.yPos + self.height:
-            self.over = True
-            if pg.mouse.get_pressed()[0]:
-                if not self.pressed:
-                    self.clicked = True
-                self.pressed = True
-            else:
-                self.pressed = False
-        else:
-            self.over = False
-            self.pressed = False
+	def update(self, pos):
+		self.clicked = False
+		if self.xPos < pos[0] < self.xPos + self.width and self.yPos < pos[1] < self.yPos + self.height:
+			self.over = True
+			if pg.mouse.get_pressed()[0]:
+				if not self.pressed:
+					self.clicked = True
+				self.pressed = True
+			else:
+				self.pressed = False
+		else:
+			self.over = False
+			self.pressed = False
 
-    def get_clicked(self):
-        return self.clicked
+	def get_clicked(self):
+		return self.clicked
 
-    def get_text(self):
-        return self.text
+	def get_text(self):
+		return self.text
 
-    def render(self):
-        # DRAWING TOP-LEFT OUTLINE AS A RECTANGLE WHICH WILL BE ALMOST COMPLETELY COVERED:
-        pg.draw.rect(window, self.lightOutlineColor, (self.xPos, self.yPos, self.width, self.height))
+	def render(self):
+		# DRAWING TOP-LEFT OUTLINE AS A RECTANGLE WHICH WILL BE ALMOST COMPLETELY COVERED:
+		pg.draw.rect(window, self.lightOutlineColor, (self.xPos, self.yPos, self.width, self.height))
 
-        # DRAWING BOTTOM-RIGHT OUTLINE AS RECTANGLE WHICH COVERS THE PREVIOUS ONE:
-        t = self.outlineThickness
-        pg.draw.rect(window, self.darkOutlineColor, (self.xPos + t, self.yPos + t, self.width - t, self.height - t))
+		# DRAWING BOTTOM-RIGHT OUTLINE AS RECTANGLE WHICH COVERS THE PREVIOUS ONE:
+		t = self.outlineThickness
+		pg.draw.rect(window, self.darkOutlineColor, (self.xPos + t, self.yPos + t, self.width - t, self.height - t))
 
-        # DRAWING CENTER OF THE CHECK-BOX:
-        if self.pressed:
-            pg.draw.rect(
-                window, self.pressedColor, (self.xPos + t, self.yPos + t, self.width - 2 * t, self.height - 2 * t)
-            )
-        elif self.over:
-            pg.draw.rect(
-                window, self.hoverColor, (self.xPos + t, self.yPos + t, self.width - 2 * t, self.height - 2 * t)
-            )
-        else:
-            pg.draw.rect(
-                window, self.idleColor, (self.xPos + t, self.yPos + t, self.width - 2 * t, self.height - 2 * t)
-            )
+		# DRAWING CENTER OF THE CHECK-BOX:
+		if self.pressed:
+			pg.draw.rect(
+				window, self.pressedColor, (self.xPos + t, self.yPos + t, self.width - 2 * t, self.height - 2 * t)
+			)
+		elif self.over:
+			pg.draw.rect(
+				window, self.hoverColor, (self.xPos + t, self.yPos + t, self.width - 2 * t, self.height - 2 * t)
+			)
+		else:
+			pg.draw.rect(
+				window, self.idleColor, (self.xPos + t, self.yPos + t, self.width - 2 * t, self.height - 2 * t)
+			)
 
-        # DRAWING TEXT:
-        if self.text != '':
-            font = pg.font.SysFont(self.font, self.charSize)
-            text = font.render(self.text, 1, self.textColor)
-            window.blit(
-                text,
-                (
-                    (self.xPos + (self.width - text.get_width()) // 2),
-                    (self.yPos + (self.height - text.get_height()) // 2)
-                )
-            )
+		# DRAWING TEXT:
+		if self.text != '':
+			font = pg.font.SysFont(self.font, self.charSize)
+			text = font.render(self.text, 1, self.textColor)
+			window.blit(
+				text,
+				(
+					(self.xPos + (self.width - text.get_width()) // 2),
+					(self.yPos + (self.height - text.get_height()) // 2)
+				)
+			)
 
 
 class ChoiceBox:
-    def __init__(
-        self, x_pos, y_pos, background_width, option_width, space_between_options,
-        background_color, background_outline_color,
-        options, default_option, title, text_color, font='arial'
-    ):
-        self.xPos = x_pos
-        self.yPos = y_pos
-        self.backgroundWidth = background_width
-        self.optionWidth = option_width
-        self.spaceBetweenOptions = space_between_options
-        self.backgroundColor = background_color
-        self.backgroundOutlineColor = background_outline_color
-        self.options = options
-        self.currentOption = default_option
-        self.title = title
-        self.textColor = text_color
-        self.font = pg.font.SysFont(font, self.optionWidth)
-        self.backgroundOutlineThickness = 1
-        self.boxOutlineThickness = 1
-        self.stateHasChanged = False
+	def __init__(
+			self, x_pos, y_pos, background_width, option_width, space_between_options,
+			background_color, background_outline_color,
+			options, default_option, title, text_color, font='arial'
+	):
+		self.xPos = x_pos
+		self.yPos = y_pos
+		self.backgroundWidth = background_width
+		self.optionWidth = option_width
+		self.spaceBetweenOptions = space_between_options
+		self.backgroundColor = background_color
+		self.backgroundOutlineColor = background_outline_color
+		self.options = options
+		self.currentOption = default_option
+		self.title = title
+		self.textColor = text_color
+		self.font = pg.font.SysFont(font, self.optionWidth)
+		self.backgroundOutlineThickness = 1
+		self.boxOutlineThickness = 1
+		self.stateHasChanged = False
 
-    def update(self, mouse_pos):
-        self.stateHasChanged = False
-        x, y = mouse_pos
-        for i in range(len(self.options)):
-            # IF MOUSE CURSOR IS AT THE CORRECT WIDTH:
-            if self.xPos + self.spaceBetweenOptions <= x <= self.xPos + self.spaceBetweenOptions + self.optionWidth:
-                # AND AT THE CORRECT HEIGHT:
-                if self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) <= y:
-                    if y <= self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (2 + i):
-                        # AND LEFT MOUSE BUTTON IS PRESSED:
-                        if pg.mouse.get_pressed()[0]:
-                            # AND WE'RE CHECKING AN OPTION OTHER THAN THE CURRENT ONE:
-                            if self.currentOption != self.options[i]:
-                                self.stateHasChanged = True
-                                self.currentOption = self.options[i]
-                            break
+	def update(self, mouse_pos):
+		self.stateHasChanged = False
+		x, y = mouse_pos
+		for i in range(len(self.options)):
+			# IF MOUSE CURSOR IS AT THE CORRECT WIDTH:
+			if self.xPos + self.spaceBetweenOptions <= x <= self.xPos + self.spaceBetweenOptions + self.optionWidth:
+				# AND AT THE CORRECT HEIGHT:
+				if self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) <= y:
+					if y <= self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (2 + i):
+						# AND LEFT MOUSE BUTTON IS PRESSED:
+						if pg.mouse.get_pressed()[0]:
+							# AND WE'RE CHECKING AN OPTION OTHER THAN THE CURRENT ONE:
+							if self.currentOption != self.options[i]:
+								self.stateHasChanged = True
+								self.currentOption = self.options[i]
+							break
 
-    def get_current_option(self):
-        return self.currentOption
+	def get_current_option(self):
+		return self.currentOption
 
-    def set_option(self, option):
-        if self.currentOption != option:
-            self.stateHasChanged = True
-        self.currentOption = option
+	def set_option(self, option):
+		if self.currentOption != option:
+			self.stateHasChanged = True
+		self.currentOption = option
 
-    def get_state_has_changed(self):
-        return self.stateHasChanged
+	def get_state_has_changed(self):
+		return self.stateHasChanged
 
-    def render(self):
-        # DRAWING TITLE AND BACKGROUND:
-        text = self.font.render(self.title, 1, self.textColor)
-        t = self.backgroundOutlineThickness
-        pg.draw.rect(
-            window, self.backgroundOutlineColor,
-            (
-                self.xPos,
-                self.yPos,
-                self.backgroundWidth,
-                (2 + len(self.options)) * self.spaceBetweenOptions + (1 + len(self.options)) * self.optionWidth
-            )
-        )
-        pg.draw.rect(
-            window, self.backgroundColor,
-            (
-                self.xPos + t,
-                self.yPos + t,
-                self.backgroundWidth - 2 * t,
-                (2 + len(self.options)) * self.spaceBetweenOptions + (1 + len(self.options)) * self.optionWidth - 2 * t
-            )
-        )
-        window.blit(text, (self.xPos + self.spaceBetweenOptions, self.yPos + self.spaceBetweenOptions - 2))
+	def render(self):
+		# DRAWING TITLE AND BACKGROUND:
+		text = self.font.render(self.title, 1, self.textColor)
+		t = self.backgroundOutlineThickness
+		pg.draw.rect(
+			window, self.backgroundOutlineColor,
+			(
+				self.xPos,
+				self.yPos,
+				self.backgroundWidth,
+				(2 + len(self.options)) * self.spaceBetweenOptions + (1 + len(self.options)) * self.optionWidth
+			)
+		)
+		pg.draw.rect(
+			window, self.backgroundColor,
+			(
+				self.xPos + t,
+				self.yPos + t,
+				self.backgroundWidth - 2 * t,
+				(2 + len(self.options)) * self.spaceBetweenOptions + (1 + len(self.options)) * self.optionWidth - 2 * t
+			)
+		)
+		window.blit(text, (self.xPos + self.spaceBetweenOptions, self.yPos + self.spaceBetweenOptions - 2))
 
-        # DRAWING OPTIONS:
-        for i in range(len(self.options)):
-            # DRAWING TOP-LEFT OUTLINE AS A RECTANGLE WHICH WILL BE ALMOST COMPLETELY COVERED:
-            pg.draw.rect(
-                window, GREY64,
-                (
-                    self.xPos + self.spaceBetweenOptions,
-                    self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i),
-                    self.optionWidth,
-                    self.optionWidth
-                )
-            )
+		# DRAWING OPTIONS:
+		for i in range(len(self.options)):
+			# DRAWING TOP-LEFT OUTLINE AS A RECTANGLE WHICH WILL BE ALMOST COMPLETELY COVERED:
+			pg.draw.rect(
+				window, GREY64,
+				(
+					self.xPos + self.spaceBetweenOptions,
+					self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i),
+					self.optionWidth,
+					self.optionWidth
+				)
+			)
 
-            # DRAWING BOTTOM-RIGHT OUTLINE AS RECTANGLE WHICH COVERS THE PREVIOUS ONE:
-            t = self.boxOutlineThickness
-            pg.draw.rect(
-                window, GREY192,
-                (
-                    self.xPos + self.spaceBetweenOptions + t,
-                    self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) + t,
-                    self.optionWidth - t,
-                    self.optionWidth - t
-                )
-            )
+			# DRAWING BOTTOM-RIGHT OUTLINE AS RECTANGLE WHICH COVERS THE PREVIOUS ONE:
+			t = self.boxOutlineThickness
+			pg.draw.rect(
+				window, GREY192,
+				(
+					self.xPos + self.spaceBetweenOptions + t,
+					self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) + t,
+					self.optionWidth - t,
+					self.optionWidth - t
+				)
+			)
 
-            # DRAWING CENTER OF THE CHECK BOX (COLOR DEPENDS ON STATE)
-            color = GREY128 if self.options[i] == self.currentOption else WHITE
-            pg.draw.rect(
-                window, color,
-                (
-                    self.xPos + self.spaceBetweenOptions + t,
-                    self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) + t,
-                    self.optionWidth - 2 * t,
-                    self.optionWidth - 2 * t
-                )
-            )
+			# DRAWING CENTER OF THE CHECK BOX (COLOR DEPENDS ON STATE)
+			color = GREY128 if self.options[i] == self.currentOption else WHITE
+			pg.draw.rect(
+				window, color,
+				(
+					self.xPos + self.spaceBetweenOptions + t,
+					self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) + t,
+					self.optionWidth - 2 * t,
+					self.optionWidth - 2 * t
+				)
+			)
 
-            # DRAWING TEXT:
-            text = self.font.render(self.options[i], 1, self.textColor)
-            window.blit(
-                text,
-                (
-                    self.xPos + self.optionWidth + 2 * self.spaceBetweenOptions,
-                    self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) - 2
-                )
-            )
+			# DRAWING TEXT:
+			text = self.font.render(self.options[i], 1, self.textColor)
+			window.blit(
+				text,
+				(
+					self.xPos + self.optionWidth + 2 * self.spaceBetweenOptions,
+					self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) - 2
+				)
+			)
 
 
 class Node:
-    def __init__(self, col, row, outline_color, outline_thickness):
-        self.col = col
-        self.row = row
-        self.outlineColor = outline_color
-        self.outlineThickness = outline_thickness
-        self.xPos = col * NODE_WIDTH + LEFT_MARGIN
-        self.yPos = row * NODE_WIDTH + TOP_MARGIN
-        self.color = STATES_COLORS['DEFAULT']
-        self.neighbors = []
-        self.visited = False
+	statesColors = {
+		'START': ORANGE,
+		'END': RED,
+		'ACTIVE': AQUA,
+		'IN_QUEUE': AQUA,
+		'CLOSED': LIGHT_BLUE,
+		'IN_PATH': YELLOW
+	}
 
-    def get_pos(self):
-        return self.col, self.row
+	def __init__(self, x_pos, y_pos, col, row, size, outline_color, outline_thickness, min_weight, max_weight, weight):
+		self.xPos = x_pos
+		self.yPos = y_pos
+		self.col = col
+		self.row = row
+		self.size = size
+		self.outlineColor = outline_color
+		self.outlineThickness = outline_thickness
+		self.neighbors = list()
+		self.visited = False
+		self.state = None
+		self.minWeight = min_weight
+		self.maxWeight = max_weight
+		self.__weight = weight
+		info = "ERROR: class Node: __init__ function: following condition isn't met: min_weight <= weight <= max_weight"
+		info += " (" + str(min_weight) + " <= " + str(weight) + " <= " + str(max_weight) + ")"
+		assert min_weight <= weight <= max_weight, info
 
-    def get_neighbors(self):
-        return self.neighbors
+	# Accessors:
+	def get_coordinates(self):
+		return self.col, self.row
 
-    def get_visited(self):
-        return self.visited
+	def get_neighbors(self):
+		return self.neighbors
 
-    def set_visited(self, visited):
-        self.visited = visited
+	def has_been_visited(self):
+		return self.visited
 
-    def update_neighbors(self, graph):
-        self.neighbors = []
-        if self.row > 0 and not graph.get_node(self.col, self.row - 1).is_barrier():  # UP
-            self.neighbors.append(graph.get_node(self.col, self.row - 1))
+	def get_state(self):
+		return self.state
 
-        if self.col > 0 and not graph.get_node(self.col - 1, self.row).is_barrier():  # LEFT
-            self.neighbors.append(graph.get_node(self.col - 1, self.row))
+	def get_weight(self):
+		return self.__weight
 
-        if self.row < ROWS - 1 and not graph.get_node(self.col, self.row + 1).is_barrier():  # DOWN
-            self.neighbors.append(graph.get_node(self.col, self.row + 1))
+	# Mutators:
+	def set_visited(self, visited):
+		self.visited = visited
 
-        if self.col < COLUMNS - 1 and not graph.get_node(self.col + 1, self.row).is_barrier():  # RIGHT
-            self.neighbors.append(graph.get_node(self.col + 1, self.row))
+	def change_state(self, state):
+		self.state = state
 
-    def render(self):
-        t = self.outlineThickness
-        if t > 0:
-            pg.draw.rect(
-                window, self.outlineColor,
-                (
-                    self.xPos,
-                    self.yPos,
-                    NODE_WIDTH + t,
-                    NODE_WIDTH + t
-                )
-            )
-        pg.draw.rect(
-            window, self.color,
-            (
-                self.xPos + t,
-                self.yPos + t,
-                NODE_WIDTH - t,
-                NODE_WIDTH - t
-            )
-        )
+	def set_weight(self, weight):
+		info = "ERROR: class Node: __init__ function: following condition isn't met: min_weight <= weight <= max_weight"
+		info += " (" + str(self.minWeight) + " <= " + str(weight) + " <= " + str(self.maxWeight) + ")"
+		assert self.minWeight <= weight <= self.maxWeight, info
+		self.__weight = weight
 
-    # STATE ACCESSORS:
-    def is_default(self):
-        return self.color == STATES_COLORS['DEFAULT']
+	# Others:
+	def update_neighbors(self, graph):
+		self.neighbors = []
 
-    def is_barrier(self):
-        return self.color == STATES_COLORS['BARRIER']
+		# UP:
+		if self.row > 0 and not graph.get_node(self.col, self.row - 1).get_weight() == self.maxWeight:
+			self.neighbors.append(graph.get_node(self.col, self.row - 1))
 
-    def is_start(self):
-        return self.color == STATES_COLORS['START']
+		# LEFT:
+		if self.col > 0 and not graph.get_node(self.col - 1, self.row).get_weight() == self.maxWeight:
+			self.neighbors.append(graph.get_node(self.col - 1, self.row))
 
-    def is_in_queue(self):
-        return self.color == STATES_COLORS['IN QUEUE']
+		# DOWN:
+		if self.row < graph.rowsCount - 1 and not graph.get_node(self.col, self.row + 1).get_weight() == self.maxWeight:
+			self.neighbors.append(graph.get_node(self.col, self.row + 1))
 
-    def is_active(self):
-        return self.color == STATES_COLORS['ACTIVE']
+		# RIGHT:
+		if self.col < graph.columnsCount - 1 and not graph.get_node(self.col + 1, self.row).get_weight() == self.maxWeight:
+			self.neighbors.append(graph.get_node(self.col + 1, self.row))
 
-    def is_closed(self):
-        return self.color == STATES_COLORS['CLOSED']
+	def render_with_state(self):
+		if self.outlineThickness > 0:
+			pg.draw.rect(
+				window, self.outlineColor,
+				(
+					self.xPos,
+					self.yPos,
+					self.size + self.outlineThickness,
+					self.size + self.outlineThickness
+				)
+			)
 
-    def is_end(self):
-        return self.color == STATES_COLORS['END']
+		if self.state is None:
+			color_component = int(255 * (1 - (self.__weight - self.minWeight) / (self.maxWeight - self.minWeight)))
+			pg.draw.rect(
+				window, (color_component, color_component, color_component),
+				(
+					self.xPos + self.outlineThickness,
+					self.yPos + self.outlineThickness,
+					self.size - self.outlineThickness,
+					self.size - self.outlineThickness
+				)
+			)
+		else:
+			pg.draw.rect(
+				window, Node.statesColors[self.state],
+				(
+					self.xPos + self.outlineThickness,
+					self.yPos + self.outlineThickness,
+					self.size - self.outlineThickness,
+					self.size - self.outlineThickness
+				)
+			)
 
-    def is_path_element(self):
-        return self.color == STATES_COLORS['PATH ELEMENT']
+	def render_without_state(self):
+		if self.outlineThickness > 0:
+			pg.draw.rect(
+				window, self.outlineColor,
+				(
+					self.xPos,
+					self.yPos,
+					self.size + self.outlineThickness,
+					self.size + self.outlineThickness
+				)
+			)
 
-    # STATE MUTATORS:
-    def set_default(self):
-        self.color = STATES_COLORS['DEFAULT']
+		color_component = int(255 * (1 - (self.__weight - self.minWeight) / (self.maxWeight - self.minWeight)))
+		pg.draw.rect(
+			window, (color_component, color_component, color_component),
+			(
+				self.xPos + self.outlineThickness,
+				self.yPos + self.outlineThickness,
+				self.size - self.outlineThickness,
+				self.size - self.outlineThickness
+			)
+		)
 
-    def set_barrier(self):
-        self.color = STATES_COLORS['BARRIER']
 
-    def set_start(self):
-        self.color = STATES_COLORS['START']
+class BfsComponent:
+	def __init__(self, columns_count, rows_count):
+		self.queue = Queue(maxsize=rows_count * columns_count)
 
-    def set_in_queue(self):
-        self.color = STATES_COLORS['IN QUEUE']
 
-    def set_active(self):
-        self.color = STATES_COLORS['ACTIVE']
+class DfsComponent:
+	def __init__(self, columns_count, rows_count):
+		self.stack = list()
 
-    def set_closed(self):
-        self.color = STATES_COLORS['CLOSED']
 
-    def set_end(self):
-        self.color = STATES_COLORS['END']
+class AStarComponent:
+	def __init__(self, columns_count, rows_count):
+		self.openSet = PriorityQueue()
+		self.gScore = {}
+		self.fScore = {}
+		for y in range(rows_count):
+			for x in range(columns_count):
+				self.gScore[x, y] = float('inf')
+				self.fScore[x, y] = float('inf')
+		self.openSetHash = {}
+		self.counter = 0
 
-    def set_path_element(self):
-        self.color = STATES_COLORS['PATH ELEMENT']
+
+class DijkstraComponent:
+	def __init__(self, rows_count, columns_count):
+		self.distances = {}
+		for y in range(rows_count):
+			for x in range(columns_count):
+				self.distances[x, y] = float('inf')
+		self.priorityQueue = PriorityQueue()
+
+
+class AlgoComponents:
+	def __init__(self, columns_count, rows_count):
+		self.fathersPos = list()
+		for i in range(columns_count):
+			temp = list()
+			for j in range(rows_count):
+				temp.append(None)
+			self.fathersPos.append(temp)
+		self.bfs = BfsComponent(columns_count, rows_count)
+		self.dfs = DfsComponent(columns_count, rows_count)
+		self.aStar = AStarComponent(columns_count, rows_count)
+		self.dijkstra = DijkstraComponent(columns_count, rows_count)
 
 
 class Graph:
-    def __init__(self):
-        self.nodes = []
-        self.fathersPos = []
-        for x in range(int(COLUMNS)):
-            temp1 = []
-            temp2 = []
-            for y in range(int(ROWS)):
-                temp1.append(Node(x, y, BLACK, 1))
-                temp2.append(None)
-            self.nodes.append(temp1)
-            self.fathersPos.append(temp2)
-        x1 = random.randint(0, COLUMNS - 1)
-        y1 = random.randint(0, ROWS - 1)
-        self.startPos = x1, y1
-        self.set_start(x1, y1)
-        x2 = random.randint(0, COLUMNS - 1)
-        y2 = random.randint(0, ROWS - 1)
-        while x1 == x2 and y1 == y2:
-            x2 = random.randint(0, COLUMNS - 1)
-            y2 = random.randint(0, ROWS - 1)
-        self.endPos = x2, y2
-        self.set_end(x2, y2)
-        self.currentlyConsideredPos = None
-        self.progressStep = 0
-        self.pathIsDone = False
-        self.pathCurrentlyConsideredPos = None
-        self.algorithm = 'BFS'
-        self.endFound = False
+	def __init__(
+			self, x_pos, y_pos, columns_count, rows_count,
+			node_size, node_outline_color, node_outline_thickness, min_nodes_weight, max_nodes_weight, default_nodes_weights
+	):
+		self.xPos = x_pos
+		self.yPos = y_pos
+		self.columnsCount = columns_count
+		self.rowsCount = rows_count
+		self.minNodesWeight = min_nodes_weight
+		self.maxNodesWeight = max_nodes_weight
 
-        # BFS STUFF:
-        self.bfsPosQueue = Queue(maxsize=ROWS * COLUMNS)
+		# constructing nodes:
+		self.nodes = list()
+		for x in range(int(columns_count)):
+			temp = []
+			for y in range(int(rows_count)):
+				temp.append(
+					Node(
+						x_pos + x * node_size, y_pos + y * node_size, x, y,
+						node_size, node_outline_color, node_outline_thickness,
+						min_nodes_weight, max_nodes_weight, default_nodes_weights
+					)
+				)
+			self.nodes.append(temp)
 
-        # DFS STUFF:
-        self.dfsPosStack = []
+		# making random start position:
+		x1_temp = random.randint(0, columns_count - 1)
+		y1_temp = random.randint(0, rows_count - 1)
+		self.startPos = x1_temp, y1_temp
+		self.nodes[x1_temp][y1_temp].change_state('START')
 
-        # A* STUFF:
-        self.openSet = PriorityQueue()
-        self.gScore = {}
-        self.fScore = {}
-        for y in range(ROWS):
-            for x in range(COLUMNS):
-                self.gScore[x, y] = float('inf')
-                self.fScore[x, y] = float('inf')
-        self.openSetHash = {}
+		# making random end position:
+		x2_temp = random.randint(0, columns_count - 1)
+		y2_temp = random.randint(0, rows_count - 1)
+		while x1_temp == x2_temp and y1_temp == y2_temp:
+			x2_temp = random.randint(0, columns_count - 1)
+			y2_temp = random.randint(0, rows_count - 1)
+		self.endPos = x2_temp, y2_temp
+		self.nodes[x2_temp][y2_temp].change_state('END')
 
-        # DIJKSTRA STUFF:
-        self.distances = {}
-        for y in range(ROWS):
-            for x in range(COLUMNS):
-                self.distances[x, y] = float('inf')
-        self.q = PriorityQueue()
+		self.algorithm = 'BFS'
+		self.sthHappened = False
+		self.currentlyConsideredPos = None
+		self.endFound = False
+		self.currentlyConsideredPathPos = None
+		self.pathIsDone = False
 
-        self.load_from_file('graph template.txt')
+		self.algoComponents = AlgoComponents(columns_count, rows_count)
 
-    def set_algorithm(self, algorithm):
-        self.algorithm = algorithm
+		self.load_from_file('graph template.txt')
 
-    def get_node(self, col, row):
-        return self.nodes[col][row]
+	# "PRIVATE" METHODS (ARE USED ONLY BY OTHER METHODS OF THIS CLASS):
+	def make_path_step(self):
+		if self.currentlyConsideredPathPos is None:
+			self.currentlyConsideredPathPos = self.endPos
+		x, y = self.currentlyConsideredPathPos
+		self.currentlyConsideredPathPos = self.algoComponents.fathersPos[x][y]
+		x, y = self.currentlyConsideredPathPos
+		if self.currentlyConsideredPathPos == self.startPos:
+			self.pathIsDone = True
+			return
+		self.nodes[x][y].change_state('IN_PATH')
 
-    def get_done(self):
-        if self.algorithm == 'BFS':
-            return self.pathIsDone or (self.bfsPosQueue.empty() and self.progressStep > 0)
-        elif self.algorithm == 'DFS':
-            return self.pathIsDone or (not self.dfsPosStack and self.progressStep > 0)
-        elif self.algorithm == 'DIJKSTRA':
-            return self.pathIsDone or (self.q.empty() and self.progressStep > 0 and not self.endFound)
-        elif self.algorithm == 'A*':
-            return self.pathIsDone or (self.openSet.empty() and self.progressStep > 0)
+	def make_bfs_step(self):
+		if not self.sthHappened:
+			self.algoComponents.bfs.queue.put(self.startPos)
+			self.sthHappened = True
+		else:
+			x, y = self.currentlyConsideredPos
+			self.safely_change_node_state(x, y, 'CLOSED')
 
-    def reset(self):
-        for x in self.nodes:
-            for y in x:
-                if not y.is_barrier() and not y.is_start() and not y.is_end():
-                    y.set_default()
-                y.set_visited(False)
-        for x in self.fathersPos:
-            for y in x:
-                y = None
-        self.currentlyConsideredPos = None
-        self.progressStep = 0
-        self.pathIsDone = False
-        self.pathCurrentlyConsideredPos = None
-        self.endFound = False
-        while not self.bfsPosQueue.empty():
-            self.bfsPosQueue.get()
-        self.dfsPosStack.clear()
-        while not self.openSet.empty():
-            self.openSet.get()
-        for y in range(ROWS):
-            for x in range(COLUMNS):
-                self.gScore[x, y] = float('inf')
-                self.fScore[x, y] = float('inf')
-        self.openSetHash.clear()
-        for y in range(ROWS):
-            for x in range(COLUMNS):
-                self.distances[x, y] = float('inf')
-        self.q = PriorityQueue()
+		if not self.algoComponents.bfs.queue.empty():
+			self.currentlyConsideredPos = self.algoComponents.bfs.queue.get()
+			x, y = self.currentlyConsideredPos
+			self.nodes[x][y].set_visited(True)
+			self.safely_change_node_state(x, y, 'ACTIVE')
 
-    def clean_all(self):
-        self.reset()
-        for x in self.nodes:
-            for y in x:
-                if y.is_barrier():
-                    y.set_default()
+			neighbors = self.nodes[x][y].get_neighbors()
+			for neighbor in neighbors:
+				if not neighbor.has_been_visited():
+					xx, yy = neighbor.get_coordinates()
+					self.nodes[xx][yy].set_visited(True)
+					self.algoComponents.bfs.queue.put(neighbor.get_coordinates())
+					self.algoComponents.fathersPos[xx][yy] = self.currentlyConsideredPos
+					if self.nodes[xx][yy].get_state() == 'END':
+						self.endFound = True
+						return
+					self.safely_change_node_state(xx, yy, 'IN_QUEUE')
 
-    def make_random(self):
-        self.clean_all()
+	def make_dfs_step(self):
+		if not self.sthHappened:
+			self.algoComponents.dfs.stack.append(self.startPos)
+			self.sthHappened = True
+		else:
+			x, y = self.currentlyConsideredPos
+			self.safely_change_node_state(x, y, 'CLOSED')
 
-        x1 = random.randint(0, COLUMNS - 1)
-        y1 = random.randint(0, ROWS - 1)
-        x, y = self.startPos
-        self.nodes[x][y].set_default()
-        self.startPos = x1, y1
-        self.nodes[x1][y1].set_start()
+		if self.algoComponents.dfs.stack:
+			self.currentlyConsideredPos = self.algoComponents.dfs.stack.pop()
+			x, y = self.currentlyConsideredPos
+			self.nodes[x][y].set_visited(True)
+			self.safely_change_node_state(x, y, 'ACTIVE')
 
-        x2 = random.randint(0, COLUMNS - 1)
-        y2 = random.randint(0, ROWS - 1)
-        x, y = self.endPos
-        self.nodes[x][y].set_default()
-        while x1 == x2 and y1 == y2:
-            x2 = random.randint(0, COLUMNS - 1)
-            y2 = random.randint(0, ROWS - 1)
-        self.endPos = x2, y2
-        self.nodes[x2][y2].set_end()
+			neighbors = self.nodes[x][y].get_neighbors()
+			for neighbor in neighbors:
+				if not neighbor.has_been_visited():
+					xx, yy = neighbor.get_coordinates()
+					self.nodes[xx][yy].set_visited(True)
+					self.algoComponents.dfs.stack.append(neighbor.get_coordinates())
+					self.algoComponents.fathersPos[xx][yy] = self.currentlyConsideredPos
+					if self.nodes[xx][yy].get_state() == 'END':
+						self.endFound = True
+						return
+					self.safely_change_node_state(xx, yy, 'IN_QUEUE')
 
-        barrier_chance = random.randint(1, 99)
-        for x in self.nodes:
-            for y in x:
-                if not y.is_start() and not y.is_end():
-                    if random.randint(0, 100) < barrier_chance // 4:
-                        y.set_barrier()
-                    else:
-                        y.set_default()
-                y.set_visited(False)
+	def make_a_star_step(self):
+		def heuristic(a, b):
+			(x1, y1) = a
+			(x2, y2) = b
+			return abs(x1 - x2) + abs(y1 - y2)
 
-    def save_to_file(self, file_path):
-        template = open(file_path, "w")
-        for y in range(int(ROWS)):
-            string = ""
-            for x in range(int(COLUMNS)):
-                if self.nodes[x][y].is_barrier():
-                    string += '1'
-                elif self.nodes[x][y].is_start():
-                    string += 'S'
-                elif self.nodes[x][y].is_end():
-                    string += 'E'
-                else:
-                    string += '0'
-            template.write(str(string))
-            template.write('\n')
-        template.close()
+		if not self.sthHappened:
+			x, y = self.startPos
+			self.algoComponents.aStar.openSet.put((0, self.algoComponents.aStar.counter, self.nodes[x][y]))
+			self.algoComponents.aStar.gScore[x, y] = 0
+			self.algoComponents.aStar.fScore[x, y] = heuristic(self.startPos, self.endPos)
+			self.algoComponents.openSetHash = {self.nodes[x][y]}
+			self.sthHappened = True
+		else:
+			x, y = self.currentlyConsideredPos
+			self.safely_change_node_state(x, y, 'CLOSED')
 
-    def load_from_file(self, file_path):
-        self.clean_all()
-        x, y = self.startPos
-        self.nodes[x][y].set_default()
-        x, y = self.endPos
-        self.nodes[x][y].set_default()
-        template = open(file_path, "r")
-        y = 0
-        for line in template:
-            x = 0
-            for char in line:
-                if char == '1':
-                    self.nodes[x][y].set_barrier()
-                elif char == 'S':
-                    self.nodes[x][y].set_start()
-                    self.startPos = x, y
-                elif char == 'E':
-                    self.nodes[x][y].set_end()
-                    self.endPos = x, y
-                x += 1
-            y += 1
-        template.close()
-        pass
+		if not self.algoComponents.aStar.openSet.empty():
+			self.currentlyConsideredPos = self.algoComponents.aStar.openSet.get()[2].get_coordinates()
+			x, y = self.currentlyConsideredPos
+			self.algoComponents.aStar.openSetHash.remove(self.nodes[x][y])
+			self.safely_change_node_state(x, y, 'ACTIVE')
 
-    def render(self):
-        for x in self.nodes:
-            for y in x:
-                y.render()
+			for neighbor in self.nodes[x][y].get_neighbors():
+				temp_g_score = self.algoComponents.aStar.gScore[x, y] + 1
 
-    def make_path_step(self):
-        if self.pathCurrentlyConsideredPos is None:
-            self.pathCurrentlyConsideredPos = self.endPos
-        x, y = self.pathCurrentlyConsideredPos
-        self.pathCurrentlyConsideredPos = self.fathersPos[x][y]
-        x, y = self.pathCurrentlyConsideredPos
-        if self.pathCurrentlyConsideredPos == self.startPos:
-            self.pathIsDone = True
-            return
-        self.nodes[x][y].set_path_element()
+				if temp_g_score < self.algoComponents.aStar.gScore[neighbor.get_pos()]:
+					xx, yy = neighbor.get_pos()
+					self.algoComponents.fathersPos[xx][yy] = x, y
+					self.algoComponents.aStar.gScore[neighbor.get_pos()] = temp_g_score
+					self.algoComponents.aStar.fScore[neighbor.get_pos()] = temp_g_score + heuristic(neighbor.get_pos(), self.endPos)
+					if neighbor not in self.algoComponents.aStar.openSetHash:
+						self.algoComponents.aStar.counter += 1
+						self.algoComponents.aStar.openSet.put(
+							(
+								self.algoComponents.aStar.fScore[neighbor.get_pos()],
+								self.algoComponents.aStar.counter,
+								neighbor
+							)
+						)
+						self.algoComponents.aStar.openSetHash.add(neighbor)
+						if neighbor.get_pos() == self.endPos:
+							self.endFound = True
+							return
+						x, y = neighbor.get_pos()
+						self.safely_change_node_state(x, y, 'IN_QUEUE')
 
-    def make_bfs_step(self):
-        if self.progressStep == 0:
-            self.bfsPosQueue.put(self.startPos)
-        else:
-            x, y = self.currentlyConsideredPos
-            self.set_closed(x, y)
+	def make_dijkstra_step(self):
+		if not self.sthHappened:
+			self.sthHappened = True
+			self.algoComponents.dijkstra.distances[self.startPos] = 0
+			self.algoComponents.dijkstra.priorityQueue.put(([0, self.startPos]))
+		else:
+			x, y = self.currentlyConsideredPos
+			self.safely_change_node_state(x, y, 'CLOSED')
 
-        if not self.bfsPosQueue.empty():
-            self.currentlyConsideredPos = self.bfsPosQueue.get()
-            x, y = self.currentlyConsideredPos
-            self.nodes[x][y].set_visited(True)
-            self.set_active(x, y)
+		if not self.algoComponents.dijkstra.priorityQueue.empty():
+			v_tuple = self.algoComponents.dijkstra.priorityQueue.get()
+			v = v_tuple[1]
+			self.currentlyConsideredPos = v_tuple[1]
+			x, y = self.currentlyConsideredPos
+			self.nodes[x][y].set_visited(True)
+			self.safely_change_node_state(x, y, 'ACTIVE')
 
-            neighbors = self.nodes[x][y].get_neighbors()
-            for neighbor in neighbors:
-                if not neighbor.get_visited():
-                    xx, yy = neighbor.get_pos()
-                    self.nodes[xx][yy].set_visited(True)
-                    self.bfsPosQueue.put(neighbor.get_pos())
-                    self.fathersPos[xx][yy] = self.currentlyConsideredPos
-                    if self.nodes[xx][yy].is_end():
-                        self.endFound = True
-                        return
-                    self.set_in_queue(xx, yy)
+			neighbors = self.nodes[x][y].get_neighbors()
+			for neighbor in neighbors:
+				x, y = neighbor.get_coordinates()
+				candidate_distance = self.algoComponents.dijkstra.distances[v] + self.nodes[x][y].get_weight()
+				if self.algoComponents.dijkstra.distances[neighbor.get_coordinates()] > candidate_distance:
+					self.algoComponents.dijkstra.distances[neighbor.get_coordinates()] = candidate_distance
+					self.algoComponents.fathersPos[x][y] = self.currentlyConsideredPos
+					self.algoComponents.dijkstra.priorityQueue.put(
+						([self.algoComponents.dijkstra.distances[neighbor.get_coordinates()], neighbor.get_coordinates()])
+					)
+					x, y = neighbor.get_coordinates()
+					self.safely_change_node_state(x, y, 'IN_QUEUE')
+					if self.endPos == neighbor.get_coordinates():
+						self.endFound = True
+						return
 
-            self.progressStep = self.progressStep + 1
+	# ACCESSORS:
+	def get_node_coordinates(self, mouse_pos):
+		x, y = mouse_pos
+		col = (x - self.xPos) // self.nodes[0][0].size
+		row = (y - self.yPos) // self.nodes[0][0].size
+		return col, row
 
-    def make_dfs_step(self):
-        if self.progressStep == 0:
-            self.dfsPosStack.append(self.startPos)
-        else:
-            x, y = self.currentlyConsideredPos
-            self.set_closed(x, y)
+	def get_node(self, col, row):
+		return self.nodes[col][row]
 
-        if self.dfsPosStack:
-            self.currentlyConsideredPos = self.dfsPosStack.pop()
-            x, y = self.currentlyConsideredPos
-            self.nodes[x][y].set_visited(True)
-            self.set_active(x, y)
+	def is_done(self):
+		if self.algorithm == 'BFS':
+			return self.pathIsDone or (self.sthHappened and self.algoComponents.bfs.queue.empty())
+		elif self.algorithm == 'DFS':
+			return self.pathIsDone or (self.sthHappened and not self.algoComponents.dfs.stack)
+		elif self.algorithm == 'A*':
+			return self.pathIsDone or (self.sthHappened and self.algoComponents.aStar.openSet.empty())
+		elif self.algorithm == 'DIJKSTRA':
+			return self.pathIsDone or (self.sthHappened and self.algoComponents.dijkstra.priorityQueue.empty())
 
-            neighbors = self.nodes[x][y].get_neighbors()
-            for neighbor in neighbors:
-                if not neighbor.get_visited():
-                    xx, yy = neighbor.get_pos()
-                    self.nodes[xx][yy].set_visited(True)
-                    self.dfsPosStack.append(neighbor.get_pos())
-                    self.fathersPos[xx][yy] = self.currentlyConsideredPos
-                    if self.nodes[xx][yy].is_end():
-                        self.endFound = True
-                        return
-                    self.set_in_queue(xx, yy)
+	# MUTATORS:
+	def safely_change_node_state(self, column, row, state):
+		if self.nodes[column][row].get_state() != 'START' and self.nodes[column][row].get_state() != 'END':
+			self.nodes[column][row].change_state(state)
+			if state == 'START':
+				x, y = self.startPos
+				self.nodes[x][y].change_state(None)
+				self.startPos = column, row
+				self.nodes[column][row].change_state('START')
+			elif state == 'END':
+				x, y = self.endPos
+				self.nodes[x][y].change_state(None)
+				self.endPos = column, row
+				self.nodes[column][row].change_state('END')
 
-            self.progressStep = self.progressStep + 1
+	def set_algorithm(self, algorithm):
+		self.algorithm = algorithm
 
-    def make_a_star_step(self):
-        def heuristic(a, b):
-            (x1, y1) = a
-            (x2, y2) = b
-            return abs(x1 - x2) + abs(y1 - y2)
+	def increase_weight(self, column, row, weight_gain):
+		assert weight_gain >= 0, "ERROR: increase_weight function:\nArgument weight_gain must be non-negative\n"
+		self.nodes[column][row].set_weight(
+			min(self.nodes[column][row].maxWeight, self.nodes[column][row].get_weight() + weight_gain)
+		)
 
-        if self.progressStep == 0:
-            x, y = self.startPos
-            self.openSet.put((0, self.progressStep, self.nodes[x][y]))
-            self.gScore[x, y] = 0
-            self.fScore[x, y] = heuristic(self.startPos, self.endPos)
-            self.openSetHash = {self.nodes[x][y]}
-        else:
-            x, y = self.currentlyConsideredPos
-            self.set_closed(x, y)
+	def decrease_weight(self, column, row, weight_loss):
+		assert weight_loss >= 0, "ERROR: decrease_weight function:\nArgument weight_gain must be non-negative\n"
+		self.nodes[column][row].set_weight(
+			max(self.nodes[column][row].minWeight, self.nodes[column][row].get_weight() - weight_loss)
+		)
 
-        if not self.openSet.empty():
-            self.currentlyConsideredPos = self.openSet.get()[2].get_pos()
-            x, y = self.currentlyConsideredPos
-            self.openSetHash.remove(self.nodes[x][y])
+	def reset(self):
+		for x in self.nodes:
+			for y in x:
+				y.set_visited(False)
+				if not y.get_state() == 'START' and not y.get_state() == 'END':
+					y.change_state(None)
 
-            if not self.nodes[x][y].is_start():
-                self.set_active(x, y)
+		self.currentlyConsideredPos = None
+		self.sthHappened = False
+		self.pathIsDone = False
+		self.currentlyConsideredPathPos = None
+		self.endFound = False
 
-            for neighbor in self.nodes[x][y].get_neighbors():
-                temp_g_score = self.gScore[x, y] + 1
+		self.algoComponents = AlgoComponents(self.columnsCount, self.rowsCount)
 
-                if temp_g_score < self.gScore[neighbor.get_pos()]:
-                    xx, yy = neighbor.get_pos()
-                    self.fathersPos[xx][yy] = x, y
-                    self.gScore[neighbor.get_pos()] = temp_g_score
-                    self.fScore[neighbor.get_pos()] = temp_g_score + heuristic(neighbor.get_pos(), self.endPos)
-                    if neighbor not in self.openSetHash:
-                        self.progressStep += 1
-                        self.openSet.put((self.fScore[neighbor.get_pos()], self.progressStep, neighbor))
-                        self.openSetHash.add(neighbor)
-                        if neighbor.get_pos() == self.endPos:
-                            self.endFound = True
-                            return
-                        neighbor.set_in_queue()
+	def clean_all(self):
+		self.reset()
+		for x in self.nodes:
+			for y in x:
+				y.set_weight(self.minNodesWeight)
 
-    def make_dijkstra_step(self):
-        if self.progressStep == 0:
-            for i in self.distances:
-                i = float('inf')
-            self.distances[self.startPos] = 0
-            self.q.put(([0, self.startPos]))
-        else:
-            x, y = self.currentlyConsideredPos
-            self.set_closed(x, y)
+	def make_random(self):
+		self.clean_all()
 
-        if not self.q.empty():
-            v_tuple = self.q.get()
-            v = v_tuple[1]
-            self.currentlyConsideredPos = v_tuple[1]
-            x, y = self.currentlyConsideredPos
-            self.nodes[x][y].set_visited(True)
-            if not self.nodes[x][y].is_start():
-                self.set_active(x, y)
+		x, y = self.startPos
+		self.nodes[x][y].change_state(None)
+		x1 = random.randint(0, self.columnsCount - 1)
+		y1 = random.randint(0, self.rowsCount - 1)
+		self.startPos = x1, y1
+		self.nodes[x1][y1].change_state('START')
 
-            neighbors = self.nodes[x][y].get_neighbors()
-            for neighbor in neighbors:
-                candidate_distance = self.distances[v] + 1  # ALL WEIGHTS ARE 1
-                if self.distances[neighbor.get_pos()] > candidate_distance:
-                    self.distances[neighbor.get_pos()] = candidate_distance
-                    x, y = neighbor.get_pos()
-                    self.fathersPos[x][y] = self.currentlyConsideredPos
-                    self.q.put(([self.distances[neighbor.get_pos()], neighbor.get_pos()]))
-                    if self.endPos != neighbor.get_pos():
-                        x, y = neighbor.get_pos()
-                        self.nodes[x][y].set_in_queue()
-                    else:
-                        self.endFound = True
+		x2 = random.randint(0, self.columnsCount - 1)
+		y2 = random.randint(0, self.rowsCount - 1)
+		x, y = self.endPos
+		self.nodes[x][y].change_state(None)
+		while x1 == x2 and y1 == y2:
+			x2 = random.randint(0, self.columnsCount - 1)
+			y2 = random.randint(0, self.rowsCount - 1)
+		self.endPos = x2, y2
+		self.nodes[x2][y2].change_state('END')
 
-            self.progressStep += 1
+		for x in self.nodes:
+			for y in x:
+				y.set_weight(random.randint(self.minNodesWeight, self.maxNodesWeight))
+				y.set_visited(False)
 
-    def make_step(self):
-        if self.algorithm != 'DIJKSTRA':
-            if self.endFound and not self.pathIsDone:
-                self.make_path_step()
-                return
-        else:
-            if self.endFound and not self.pathIsDone:
-                if self.q.empty():
-                    self.make_path_step()
-                    return
+	# OTHER METHODS:
+	def make_step(self):
+		if self.endFound and not self.pathIsDone:
+			self.make_path_step()
+			return
 
-        if self.algorithm == 'BFS':
-            self.make_bfs_step()
-        elif self.algorithm == 'DFS':
-            self.make_dfs_step()
-        elif self.algorithm == 'DIJKSTRA':
-            self.make_dijkstra_step()
-        elif self.algorithm == 'A*':
-            self.make_a_star_step()
+		if self.algorithm == 'BFS':
+			self.make_bfs_step()
+		elif self.algorithm == 'DFS':
+			self.make_dfs_step()
+		elif self.algorithm == 'A*':
+			self.make_a_star_step()
+		elif self.algorithm == 'DIJKSTRA':
+			self.make_dijkstra_step()
 
-    # NODES MUTATORS:
-    def set_default(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start() and not self.nodes[x_pos][y_pos].is_end():
-            self.nodes[x_pos][y_pos].set_default()
+	def render(self):
+		if not self.is_done():
+			for x in self.nodes:
+				for y in x:
+					y.render_with_state()
+		else:
+			for x in self.nodes:
+				for y in x:
+					if y.state != 'START' and y.state != 'END' and y.state != 'IN_PATH':
+						y.render_without_state()
+					else:
+						y.render_with_state()
 
-    def set_barrier(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start() and not self.nodes[x_pos][y_pos].is_end():
-            self.nodes[x_pos][y_pos].set_barrier()
+	def save_to_file(self, file_path):
+		template = open(file_path, "w")
+		for y in range(int(self.rowsCount)):
+			string = ""
+			for x in range(int(self.columnsCount)):
+				if self.nodes[x][y].get_state() == 'START':
+					string += 'START '
+				elif self.nodes[x][y].get_state() == "END":
+					string += 'END '
+				else:
+					string += str(self.nodes[x][y].get_weight()) + ' '
+			template.write(str(string))
+			template.write('\n')
+		template.close()
 
-    def set_start(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_end():
-            x, y = self.startPos
-            if self.startPos:
-                self.nodes[x][y].set_default()
-            self.nodes[x_pos][y_pos].set_start()
-            self.startPos = (x_pos, y_pos)
+	def load_from_file(self, file_path):
+		self.clean_all()
 
-    def set_in_queue(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start() and not self.nodes[x_pos][y_pos].is_end():
-            self.nodes[x_pos][y_pos].set_in_queue()
+		x, y = self.startPos
+		self.nodes[x][y].change_state(None)
 
-    def set_active(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start() and not self.nodes[x_pos][y_pos].is_end():
-            self.nodes[x_pos][y_pos].set_active()
+		x, y = self.endPos
+		self.nodes[x][y].change_state(None)
 
-    def set_closed(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start() and not self.nodes[x_pos][y_pos].is_end():
-            self.nodes[x_pos][y_pos].set_closed()
-
-    def set_end(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start():
-            x, y = self.endPos
-            if self.endPos:
-                self.nodes[x][y].set_default()
-            self.nodes[x_pos][y_pos].set_end()
-            self.endPos = (x_pos, y_pos)
-
-    def set_path_element(self, x_pos, y_pos):
-        if not self.nodes[x_pos][y_pos].is_start() and not self.nodes[x_pos][y_pos].is_end():
-            self.nodes[x_pos][y_pos].set_path_element()
+		template = open(file_path, "r")
+		y = 0
+		for line in template:
+			x = 0
+			for word in line.split():
+				if word == 'START':
+					self.nodes[x][y].change_state('START')
+					self.startPos = x, y
+				elif word == 'END':
+					self.nodes[x][y].change_state('END')
+					self.endPos = x, y
+				else:
+					self.nodes[x][y].set_weight(int(word))
+				x += 1
+			y += 1
+		template.close()
 
 
-def get_node_mouse_pos(pos):
-    x, y = pos
-    col = (x - LEFT_MARGIN) // NODE_WIDTH
-    row = (y - TOP_MARGIN) // NODE_WIDTH
-    return col, row
+def init_buttons(graph):
+	buttons = []
+	x = 2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size + 30
+	y = 4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18 + 10
+	buttons.append(Button(x, y + 0 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "RESET"))
+	buttons.append(Button(x, y + 1 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "CLEAN"))
+	buttons.append(Button(x, y + 2 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "RANDOM"))
+	buttons.append(Button(x, y + 3 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "LOAD"))
+	buttons.append(Button(x, y + 4 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "SAVE"))
+	buttons.append(Button(x, y + 5 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "MAZE"))
+	return buttons
 
 
-def init_buttons():
-    buttons = []
-    x = 2 * LEFT_MARGIN + GRAPH_WIDTH + 30
-    y = 4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18 + 10
-    buttons.append(Button(x, y + 0 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "RESET"))
-    buttons.append(Button(x, y + 1 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "CLEAN"))
-    buttons.append(Button(x, y + 2 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "RANDOM"))
-    buttons.append(Button(x, y + 3 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "LOAD"))
-    buttons.append(Button(x, y + 4 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "SAVE"))
-    buttons.append(Button(x, y + 5 * 42, 100, 32, GREY224, GREY240, GREY192, 1, BLACK, 18, "MAZE"))
-    return buttons
-
-
-def render_buttons_background():
-    pg.draw.rect(
-        window, BLACK,
-        (
-            2 * LEFT_MARGIN + GRAPH_WIDTH,
-            4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18,
-            160,
-            HEIGHT - (4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18) - TOP_MARGIN
-        )
-    )
-    pg.draw.rect(
-        window, GREY224,
-        (
-            2 * LEFT_MARGIN + GRAPH_WIDTH + 1,
-            4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18 + 1,
-            158,
-            HEIGHT - (4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18) - TOP_MARGIN - 2
-        )
-    )
+def render_buttons_background(graph):
+	pg.draw.rect(
+		window, BLACK,
+		(
+			2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size,
+			4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18,
+			160,
+			HEIGHT - (4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18) - TOP_MARGIN
+		)
+	)
+	pg.draw.rect(
+		window, GREY224,
+		(
+			2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size + 1,
+			4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18 + 1,
+			158,
+			HEIGHT - (4 * TOP_MARGIN + 324 + 4 * 12 + 3 * 18) - TOP_MARGIN - 2
+		)
+	)
 
 
 def main():
-    graph = Graph()
+	clock = pg.time.Clock()
+	graph = Graph(LEFT_MARGIN, TOP_MARGIN, 23, 23, 32, BLACK, 1, 1, 255, 1)
 
-    # "CHOICE BOXES":
-    x = 2 * LEFT_MARGIN + GRAPH_WIDTH
-    algorithm_choice_box = ChoiceBox(
-        x, TOP_MARGIN, 160, 18, 12, GREY224, BLACK, ALGORITHMS, 'BFS', 'ALGORITHM:', BLACK
-    )
-    node_action_choice_box = ChoiceBox(
-        x, 2 * TOP_MARGIN + 162, 160, 18, 12, GREY224, BLACK, NODE_TYPES, 'BARRIER', 'NODE TYPE:', BLACK
-    )
-    on_choice_box = ChoiceBox(
-        x, 3 * TOP_MARGIN + 324, 160, 18, 12, GREY224, BLACK, ['ON', 'OFF'], 'OFF', 'STATE:', BLACK
-    )
+	# "CHOICE BOXES":
+	x = 2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size
+	algorithm_choice_box = ChoiceBox(
+		x, TOP_MARGIN, 160, 18, 12, GREY224, BLACK, ['BFS', 'DFS', 'A*', 'DIJKSTRA'], 'BFS', 'ALGORITHM:', BLACK
+	)
+	node_action_choice_box = ChoiceBox(
+		x, 2 * TOP_MARGIN + 162, 160, 18, 12, GREY224, BLACK, ['START', 'END', 'INCREASE', 'DECREASE'], 'START', 'NODE ACTIONS:', BLACK
+	)
+	on_choice_box = ChoiceBox(
+		x, 3 * TOP_MARGIN + 324, 160, 18, 12, GREY224, BLACK, ['ON', 'OFF'], 'OFF', 'ON/OFF:', BLACK
+	)
 
-    buttons = init_buttons()
-    run = True
-    mouse_pos = None
+	buttons = init_buttons(graph)
+	run = True
+	mouse_pos = None
 
-    while run:
-        clock.tick(FPS)
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                run = False
+	while run:
+		clock.tick(FPS)
+		for event in pg.event.get():
+			if event.type == pg.QUIT:
+				run = False
 
-            mouse_pos = pg.mouse.get_pos()
+			mouse_pos = pg.mouse.get_pos()
 
-        for btn in buttons:
-            btn.update(mouse_pos)
+		for btn in buttons:
+			btn.update(mouse_pos)
 
-        # CHECKING IF ANY BUTTON HAS BEEN CLICKED:
-        if pg.mouse.get_pressed()[0]:
-            for btn in buttons:
-                if btn.get_clicked():
-                    text = btn.get_text()
-                    if text == 'RESET':
-                        graph.reset()
-                    elif text == 'CLEAN':
-                        graph.clean_all()
-                    elif text == 'RANDOM':
-                        graph.make_random()
-                    elif text == 'SAVE':
-                        graph.save_to_file('graph template.txt')
-                    elif text == 'LOAD':
-                        graph.load_from_file('graph template.txt')
-                    elif text == 'MAZE':
-                        graph.load_from_file('graph maze template.txt')
-                    break
+		# CHECKING IF ANY BUTTON HAS BEEN CLICKED:
+		if pg.mouse.get_pressed()[0]:
+			for btn in buttons:
+				if btn.get_clicked():
+					text = btn.get_text()
+					if text == 'RESET':
+						graph.reset()
+					elif text == 'CLEAN':
+						graph.clean_all()
+					elif text == 'RANDOM':
+						graph.make_random()
+					elif text == 'SAVE':
+						graph.save_to_file('graph template.txt')
+					elif text == 'LOAD':
+						graph.load_from_file('graph template.txt')
+					elif text == 'MAZE':
+						graph.load_from_file('graph maze template.txt')
+					break
 
-        # UPDATING CHECK BOXES:
-        algorithm_choice_box.update(mouse_pos)
-        node_action_choice_box.update(mouse_pos)
-        on_choice_box.update(mouse_pos)
+		# UPDATING CHECK BOXES:
+		algorithm_choice_box.update(mouse_pos)
+		node_action_choice_box.update(mouse_pos)
+		on_choice_box.update(mouse_pos)
 
-        node_type = node_action_choice_box.get_current_option()
+		node_action = node_action_choice_box.get_current_option()
 
-        if algorithm_choice_box.get_state_has_changed():
-            graph.set_algorithm(algorithm_choice_box.get_current_option())
-            graph.reset()
+		if algorithm_choice_box.get_state_has_changed():
+			graph.set_algorithm(algorithm_choice_box.get_current_option())
+			graph.reset()
 
-        # CHANGING A NODE STATE:
-        if pg.mouse.get_pressed()[0]:
-            col, row = get_node_mouse_pos(mouse_pos)
-            if 0 <= col < COLUMNS and 0 <= row < ROWS:
-                if node_type == 'DEFAULT':
-                    graph.set_default(col, row)
-                elif node_type == 'BARRIER':
-                    graph.set_barrier(col, row)
-                elif node_type == 'START':
-                    graph.set_start(col, row)
-                elif node_type == 'END':
-                    graph.set_end(col, row)
-                graph.reset()
+		# CHANGING A NODE STATE:
+		if pg.mouse.get_pressed()[0]:
+			col, row = graph.get_node_coordinates(mouse_pos)
+			if 0 <= col < graph.columnsCount and 0 <= row < graph.rowsCount:
+				graph.reset()
+				if node_action == 'START' or node_action == 'END':
+					graph.safely_change_node_state(col, row, node_action)
+				elif node_action == 'INCREASE':
+					graph.increase_weight(col, row, 10)
+				elif node_action == 'DECREASE':
+					graph.decrease_weight(col, row, 10)
 
-        # REMOVING BARRIERS USING RIGHT MOUSE BUTTON:
-        if pg.mouse.get_pressed()[2]:
-            col, row = get_node_mouse_pos(mouse_pos)
-            if 0 <= col < COLUMNS and 0 <= row < ROWS:
-                graph.set_default(col, row)
-                graph.reset()
+		# REMOVING BARRIERS USING RIGHT MOUSE BUTTON:
+		if pg.mouse.get_pressed()[2]:
+			col, row = graph.get_node_coordinates(mouse_pos)
+			if 0 <= col < graph.columnsCount and 0 <= row < graph.rowsCount:
+				graph.reset()
+				if node_action == 'START':
+					graph.safely_change_node_state(col, row, 'END')
+				elif node_action == 'END':
+					graph.safely_change_node_state(col, row, 'START')
+				elif node_action == 'INCREASE':
+					graph.decrease_weight(col, row, 10)
+				elif node_action == 'DECREASE':
+					graph.increase_weight(col, row, 10)
 
-        # UPDATING NEIGHBORS:
-        for x in range(int(COLUMNS)):
-            for y in range(int(ROWS)):
-                graph.get_node(x, y).update_neighbors(graph)
+		# UPDATING NEIGHBORS:
+		for x in range(int(graph.columnsCount)):
+			for y in range(int(graph.rowsCount)):
+				graph.get_node(x, y).update_neighbors(graph)
 
-        if graph.get_done():
-            on_choice_box.set_option('OFF')
+		if graph.is_done():
+			on_choice_box.set_option('OFF')
 
-        if on_choice_box.get_current_option() == 'ON':
-            graph.make_step()
+		if on_choice_box.get_current_option() == 'ON':
+			graph.make_step()
 
-        # RENDERING:
-        window.fill(BACKGROUND_COLOR)
-        graph.render()
-        render_buttons_background()
-        for btn in buttons:
-            btn.render()
-        algorithm_choice_box.render()
-        node_action_choice_box.render()
-        on_choice_box.render()
-        pg.display.update()
+		# RENDERING:
+		window.fill(BACKGROUND_COLOR)
+		graph.render()
+		render_buttons_background(graph)
+		for btn in buttons:
+			btn.render()
+		algorithm_choice_box.render()
+		node_action_choice_box.render()
+		on_choice_box.render()
+		pg.display.update()
 
-    pg.quit()
+	pg.quit()
 
 
 if __name__ == '__main__':
-    main()
+	main()
 
-print('Code is done!')
+print('Code is done, so everything works fine!')
