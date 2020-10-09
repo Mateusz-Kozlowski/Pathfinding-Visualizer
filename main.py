@@ -387,21 +387,17 @@ class BfsComponent:
 
 
 class DfsComponent:
-	def __init__(self, columns_count, rows_count):
+	def __init__(self):
 		self.stack = list()
 
 
 class AStarComponent:
 	def __init__(self, columns_count, rows_count):
-		self.openSet = PriorityQueue()
-		self.gScore = {}
-		self.fScore = {}
-		for y in range(rows_count):
-			for x in range(columns_count):
-				self.gScore[x, y] = float('inf')
-				self.fScore[x, y] = float('inf')
-		self.openSetHash = {}
-		self.counter = 0
+		self.count = None
+		self.openSet = None
+		self.gScore = None
+		self.fScore = None
+		self.openSetHash = None
 
 
 class DijkstraComponent:
@@ -422,7 +418,7 @@ class AlgoComponents:
 				temp.append(None)
 			self.fathersPos.append(temp)
 		self.bfs = BfsComponent(columns_count, rows_count)
-		self.dfs = DfsComponent(columns_count, rows_count)
+		self.dfs = DfsComponent()
 		self.aStar = AStarComponent(columns_count, rows_count)
 		self.dijkstra = DijkstraComponent(columns_count, rows_count)
 
@@ -430,7 +426,8 @@ class AlgoComponents:
 class Graph:
 	def __init__(
 			self, x_pos, y_pos, columns_count, rows_count,
-			node_size, node_outline_color, node_outline_thickness, min_nodes_weight, max_nodes_weight, default_nodes_weights
+			node_size, node_outline_color, node_outline_thickness,
+			min_nodes_weight, max_nodes_weight, default_nodes_weights
 	):
 		self.xPos = x_pos
 		self.yPos = y_pos
@@ -545,50 +542,55 @@ class Graph:
 
 	def make_a_star_step(self):
 		def heuristic(a, b):
-			(x1, y1) = a
-			(x2, y2) = b
+			x1, y1 = a
+			x2, y2 = b
 			return abs(x1 - x2) + abs(y1 - y2)
 
 		if not self.sthHappened:
-			x, y = self.startPos
-			self.algoComponents.aStar.openSet.put((0, self.algoComponents.aStar.counter, self.nodes[x][y]))
-			self.algoComponents.aStar.gScore[x, y] = 0
-			self.algoComponents.aStar.fScore[x, y] = heuristic(self.startPos, self.endPos)
-			self.algoComponents.openSetHash = {self.nodes[x][y]}
 			self.sthHappened = True
-		else:
-			x, y = self.currentlyConsideredPos
-			self.safely_change_node_state(x, y, 'CLOSED')
+			self.algoComponents.aStar.count = 0
+			self.algoComponents.aStar.openSet = PriorityQueue()
+			xs, ys = self.startPos
+			self.algoComponents.aStar.openSet.put((0, self.algoComponents.aStar.count, self.nodes[xs][ys]))
+			self.algoComponents.aStar.gScore = {node: float("inf") for row in self.nodes for node in row}
+			self.algoComponents.aStar.gScore[self.nodes[xs][ys]] = 0
+			self.algoComponents.aStar.fScore = {node: float("inf") for row in self.nodes for node in row}
+			xe, ye = self.endPos
+			temp = heuristic(self.nodes[xs][ys].get_coordinates(), self.nodes[xe][ye].get_coordinates())
+			self.algoComponents.aStar.fScore[self.nodes[xs][ys]] = temp
+			self.algoComponents.aStar.openSetHash = {self.nodes[xs][ys]}
 
 		if not self.algoComponents.aStar.openSet.empty():
-			self.currentlyConsideredPos = self.algoComponents.aStar.openSet.get()[2].get_coordinates()
-			x, y = self.currentlyConsideredPos
-			self.algoComponents.aStar.openSetHash.remove(self.nodes[x][y])
-			self.safely_change_node_state(x, y, 'ACTIVE')
+			current = self.algoComponents.aStar.openSet.get()[2]
+			self.algoComponents.aStar.openSetHash.remove(current)
+			self.currentlyConsideredPos = current.get_coordinates()
+			xe, ye = self.endPos
+			if current == self.nodes[xe][ye]:
+				self.endFound = True
+				return
 
-			for neighbor in self.nodes[x][y].get_neighbors():
-				temp_g_score = self.algoComponents.aStar.gScore[x, y] + 1
+			for neighbor in current.get_neighbors():
+				xx, yy = neighbor.get_coordinates()
+				temp_g_score = self.algoComponents.aStar.gScore[current] + self.nodes[xx][yy].get_weight()
 
-				if temp_g_score < self.algoComponents.aStar.gScore[neighbor.get_pos()]:
-					xx, yy = neighbor.get_pos()
-					self.algoComponents.fathersPos[xx][yy] = x, y
-					self.algoComponents.aStar.gScore[neighbor.get_pos()] = temp_g_score
-					self.algoComponents.aStar.fScore[neighbor.get_pos()] = temp_g_score + heuristic(neighbor.get_pos(), self.endPos)
+				if temp_g_score < self.algoComponents.aStar.gScore[neighbor]:
+					self.algoComponents.fathersPos[xx][yy] = current.get_coordinates()
+					self.algoComponents.aStar.gScore[neighbor] = temp_g_score
+					self.algoComponents.aStar.fScore[neighbor] = temp_g_score + heuristic(neighbor.get_coordinates(), self.endPos)
 					if neighbor not in self.algoComponents.aStar.openSetHash:
-						self.algoComponents.aStar.counter += 1
+						self.algoComponents.aStar.count += 1
 						self.algoComponents.aStar.openSet.put(
 							(
-								self.algoComponents.aStar.fScore[neighbor.get_pos()],
-								self.algoComponents.aStar.counter,
+								self.algoComponents.aStar.fScore[neighbor],
+								self.algoComponents.aStar.count,
 								neighbor
 							)
 						)
 						self.algoComponents.aStar.openSetHash.add(neighbor)
-						if neighbor.get_pos() == self.endPos:
-							self.endFound = True
-							return
-						x, y = neighbor.get_pos()
-						self.safely_change_node_state(x, y, 'IN_QUEUE')
+						self.safely_change_node_state(xx, yy, 'IN_QUEUE')
+
+			x, y = current.get_coordinates()
+			self.safely_change_node_state(x, y, 'CLOSED')
 
 	def make_dijkstra_step(self):
 		if not self.sthHappened:
@@ -938,4 +940,4 @@ def main():
 if __name__ == '__main__':
 	main()
 
-print('Code is done, so everything works fine!')
+print('\nCode is done, so everything works fine!')
