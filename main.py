@@ -391,15 +391,6 @@ class DfsComponent:
 		self.stack = list()
 
 
-class AStarComponent:
-	def __init__(self, columns_count, rows_count):
-		self.count = None
-		self.openSet = None
-		self.gScore = None
-		self.fScore = None
-		self.openSetHash = None
-
-
 class DijkstraComponent:
 	def __init__(self, rows_count, columns_count):
 		self.distances = {}
@@ -407,6 +398,15 @@ class DijkstraComponent:
 			for x in range(columns_count):
 				self.distances[x, y] = float('inf')
 		self.priorityQueue = PriorityQueue()
+
+
+class AStarComponent:
+	def __init__(self):
+		self.count = None
+		self.openSet = None
+		self.gScore = None
+		self.fScore = None
+		self.openSetHash = None
 
 
 class AlgoComponents:
@@ -419,8 +419,8 @@ class AlgoComponents:
 			self.fathersPos.append(temp)
 		self.bfs = BfsComponent(columns_count, rows_count)
 		self.dfs = DfsComponent()
-		self.aStar = AStarComponent(columns_count, rows_count)
 		self.dijkstra = DijkstraComponent(columns_count, rows_count)
+		self.aStar = AStarComponent()
 
 
 class Graph:
@@ -540,6 +540,39 @@ class Graph:
 						return
 					self.safely_change_node_state(xx, yy, 'IN_QUEUE')
 
+	def make_dijkstra_step(self):
+		if not self.sthHappened:
+			self.sthHappened = True
+			self.algoComponents.dijkstra.distances[self.startPos] = 0
+			self.algoComponents.dijkstra.priorityQueue.put(([0, self.startPos]))
+		else:
+			x, y = self.currentlyConsideredPos
+			self.safely_change_node_state(x, y, 'CLOSED')
+
+		if not self.algoComponents.dijkstra.priorityQueue.empty():
+			v_tuple = self.algoComponents.dijkstra.priorityQueue.get()
+			v = v_tuple[1]
+			self.currentlyConsideredPos = v_tuple[1]
+			x, y = self.currentlyConsideredPos
+			self.nodes[x][y].set_visited(True)
+			self.safely_change_node_state(x, y, 'ACTIVE')
+
+			neighbors = self.nodes[x][y].get_neighbors()
+			for neighbor in neighbors:
+				x, y = neighbor.get_coordinates()
+				candidate_distance = self.algoComponents.dijkstra.distances[v] + self.nodes[x][y].get_weight()
+				if self.algoComponents.dijkstra.distances[neighbor.get_coordinates()] > candidate_distance:
+					self.algoComponents.dijkstra.distances[neighbor.get_coordinates()] = candidate_distance
+					self.algoComponents.fathersPos[x][y] = self.currentlyConsideredPos
+					self.algoComponents.dijkstra.priorityQueue.put(
+						([self.algoComponents.dijkstra.distances[neighbor.get_coordinates()], neighbor.get_coordinates()])
+					)
+					x, y = neighbor.get_coordinates()
+					self.safely_change_node_state(x, y, 'IN_QUEUE')
+					if self.endPos == neighbor.get_coordinates():
+						self.endFound = True
+						return
+
 	def make_a_star_step(self):
 		def heuristic(a, b):
 			x1, y1 = a
@@ -592,39 +625,6 @@ class Graph:
 			x, y = current.get_coordinates()
 			self.safely_change_node_state(x, y, 'CLOSED')
 
-	def make_dijkstra_step(self):
-		if not self.sthHappened:
-			self.sthHappened = True
-			self.algoComponents.dijkstra.distances[self.startPos] = 0
-			self.algoComponents.dijkstra.priorityQueue.put(([0, self.startPos]))
-		else:
-			x, y = self.currentlyConsideredPos
-			self.safely_change_node_state(x, y, 'CLOSED')
-
-		if not self.algoComponents.dijkstra.priorityQueue.empty():
-			v_tuple = self.algoComponents.dijkstra.priorityQueue.get()
-			v = v_tuple[1]
-			self.currentlyConsideredPos = v_tuple[1]
-			x, y = self.currentlyConsideredPos
-			self.nodes[x][y].set_visited(True)
-			self.safely_change_node_state(x, y, 'ACTIVE')
-
-			neighbors = self.nodes[x][y].get_neighbors()
-			for neighbor in neighbors:
-				x, y = neighbor.get_coordinates()
-				candidate_distance = self.algoComponents.dijkstra.distances[v] + self.nodes[x][y].get_weight()
-				if self.algoComponents.dijkstra.distances[neighbor.get_coordinates()] > candidate_distance:
-					self.algoComponents.dijkstra.distances[neighbor.get_coordinates()] = candidate_distance
-					self.algoComponents.fathersPos[x][y] = self.currentlyConsideredPos
-					self.algoComponents.dijkstra.priorityQueue.put(
-						([self.algoComponents.dijkstra.distances[neighbor.get_coordinates()], neighbor.get_coordinates()])
-					)
-					x, y = neighbor.get_coordinates()
-					self.safely_change_node_state(x, y, 'IN_QUEUE')
-					if self.endPos == neighbor.get_coordinates():
-						self.endFound = True
-						return
-
 	# ACCESSORS:
 	def get_node_coordinates(self, mouse_pos):
 		x, y = mouse_pos
@@ -640,10 +640,10 @@ class Graph:
 			return self.pathIsDone or (self.sthHappened and self.algoComponents.bfs.queue.empty())
 		elif self.algorithm == 'DFS':
 			return self.pathIsDone or (self.sthHappened and not self.algoComponents.dfs.stack)
-		elif self.algorithm == 'A*':
-			return self.pathIsDone or (self.sthHappened and self.algoComponents.aStar.openSet.empty())
 		elif self.algorithm == 'DIJKSTRA':
 			return self.pathIsDone or (self.sthHappened and self.algoComponents.dijkstra.priorityQueue.empty())
+		elif self.algorithm == 'A*':
+			return self.pathIsDone or (self.sthHappened and self.algoComponents.aStar.openSet.empty())
 
 	# MUTATORS:
 	def safely_change_node_state(self, column, row, state):
@@ -731,10 +731,10 @@ class Graph:
 			self.make_bfs_step()
 		elif self.algorithm == 'DFS':
 			self.make_dfs_step()
-		elif self.algorithm == 'A*':
-			self.make_a_star_step()
 		elif self.algorithm == 'DIJKSTRA':
 			self.make_dijkstra_step()
+		elif self.algorithm == 'A*':
+			self.make_a_star_step()
 
 	def render(self):
 		if not self.is_done():
@@ -832,7 +832,7 @@ def main():
 	# "CHOICE BOXES":
 	x = 2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size
 	algorithm_choice_box = ChoiceBox(
-		x, TOP_MARGIN, 160, 18, 12, GREY224, BLACK, ['BFS', 'DFS', 'A*', 'DIJKSTRA'], 'BFS', 'ALGORITHM:', BLACK
+		x, TOP_MARGIN, 160, 18, 12, GREY224, BLACK, ['BFS', 'DFS', 'DIJKSTRA', 'A*'], 'BFS', 'ALGORITHM:', BLACK
 	)
 	node_action_choice_box = ChoiceBox(
 		x, 2 * TOP_MARGIN + 162, 160, 18, 12, GREY224, BLACK, ['START', 'END', 'INCREASE', 'DECREASE'], 'START', 'NODE ACTIONS:', BLACK
