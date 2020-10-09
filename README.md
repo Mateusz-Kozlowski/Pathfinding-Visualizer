@@ -1,3 +1,5 @@
+-> [LINK TO A VIDEO SHOWING HOW THE PROGRAM EXACTLY WORKS](https://drive.google.com/file/d/1hSDKI61Yxf8yH8wNy6vLrCUpFmyFXZ5H/view?usp=sharing) <-
+
 # Pathfinding-Visualizer
 
 Pathfiding Visualizer is my first Python project, so it isn't written in the best way. The code isn't very clean and the program isn't easily extensible. I plan to improve the code and rebuild the project in the future, but it won't be too soon.
@@ -13,7 +15,9 @@ Python 3.8 with following modules installed:
 * Pygame 1.9
 
 # 2. Project Description:
-Comming soon! (or rather after the next update, so not soon)
+The project supports following algorithms:
+
+<b> BFS </b> (unweighted) O(|V|+|E|)
 
 # 3. How to install:
 If you're familiar with git you can clone the repo. Otherwise you can simply download whole project as a compressed folder.
