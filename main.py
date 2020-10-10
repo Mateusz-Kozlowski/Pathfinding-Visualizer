@@ -69,9 +69,19 @@ class Button:
 		self.lightOutlineColor = WHITE
 		self.darkOutlineColor = BLACK
 
-	def update(self, pos):
+	def update(self, mouse_pos):
+		"""
+		CALL THE FUNCTION EVERY FRAME, BEFORE:
+		- CHECKING IF THE BUTTON HAS BEEN CLICKED
+		- CHECKING IF THE BUTTON IS PRESSED
+		- RENDERING
+
+		TAKES AS ARGUMENT THE LAST MOUSE POSITION
+		"""
 		self.clicked = False
-		if self.xPos < pos[0] < self.xPos + self.width and self.yPos < pos[1] < self.yPos + self.height:
+
+		# CHECKING IF THE BUTTON IS CLICKED
+		if self.xPos < mouse_pos[0] < self.xPos + self.width and self.yPos < mouse_pos[1] < self.yPos + self.height:
 			self.over = True
 			if pg.mouse.get_pressed()[0]:
 				if not self.pressed:
@@ -84,12 +94,22 @@ class Button:
 			self.pressed = False
 
 	def get_clicked(self):
+		"""
+		RETURNS TRUE IF THE BUTTON WAS CLICKED DURING LAST update FUNCTION CALL, OTHERWISE RETURNS FALSE
+		"""
 		return self.clicked
 
 	def get_text(self):
+		"""
+		RETURNS THE TEXT OF THE BUTTON
+		"""
 		return self.text
 
 	def render(self):
+		"""
+		CALL THE FUNCTION AT THE END OF EVERY FRAME
+		"""
+
 		# DRAWING TOP-LEFT OUTLINE AS A RECTANGLE WHICH WILL BE ALMOST COMPLETELY COVERED:
 		pg.draw.rect(window, self.lightOutlineColor, (self.xPos, self.yPos, self.width, self.height))
 
@@ -147,16 +167,30 @@ class ChoiceBox:
 		self.stateHasChanged = False
 
 	def update(self, mouse_pos):
+		"""
+		CALL THE FUNCTION EVERY FRAME, BEFORE:
+		- CHECKING IF THE CHOICE BOX HAS BEEN CLICKED
+		- CHECKING IF THE CHOICE BOX IS PRESSED
+		- RENDERING
+
+		TAKES AS ARGUMENT THE LAST MOUSE POSITION
+		"""
+
 		self.stateHasChanged = False
 		x, y = mouse_pos
+
 		for i in range(len(self.options)):
+
 			# IF MOUSE CURSOR IS AT THE CORRECT WIDTH:
 			if self.xPos + self.spaceBetweenOptions <= x <= self.xPos + self.spaceBetweenOptions + self.optionWidth:
+
 				# AND AT THE CORRECT HEIGHT:
 				if self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (1 + i) <= y:
 					if y <= self.yPos + self.spaceBetweenOptions * (2 + i) + self.optionWidth * (2 + i):
+
 						# AND LEFT MOUSE BUTTON IS PRESSED:
 						if pg.mouse.get_pressed()[0]:
+
 							# AND WE'RE CHECKING AN OPTION OTHER THAN THE CURRENT ONE:
 							if self.currentOption != self.options[i]:
 								self.stateHasChanged = True
@@ -164,17 +198,30 @@ class ChoiceBox:
 							break
 
 	def get_current_option(self):
+		"""
+		RETURNS CURRENTLY SELECTED OPTION
+		"""
 		return self.currentOption
 
 	def set_option(self, option):
+		"""
+		CHANGES CURRENTLY SELECTED OPTION
+		"""
 		if self.currentOption != option:
 			self.stateHasChanged = True
 		self.currentOption = option
 
 	def get_state_has_changed(self):
+		"""
+		RETURNS TRUE IF THE CHOICE BOX OPTION HAS CHANGED SINCE OR DURING LAST update FUNCTION CALL
+		"""
 		return self.stateHasChanged
 
 	def render(self):
+		"""
+		CALL THE FUNCTION AT THE END OF EVERY FRAME
+		"""
+
 		# DRAWING TITLE AND BACKGROUND:
 		text = self.font.render(self.title, 1, self.textColor)
 		t = self.backgroundOutlineThickness
@@ -247,6 +294,10 @@ class ChoiceBox:
 
 
 class Node:
+	"""
+	THE NODE CLASS IS ADAPTED TO UDE IN GRAPHS IN THE FORM OF A RECTANGULAR GRID, WHERE EACH VERTEX HAS 4 NEIGHBORS
+	"""
+
 	statesColors = {
 		'START': ORANGE,
 		'END': RED,
@@ -276,28 +327,53 @@ class Node:
 
 	# Accessors:
 	def get_coordinates(self):
+		"""
+		RETURNS THE NODE COORDINATES (COLUMN AND ROW IN WHICH IT IS LOCATED)
+		"""
 		return self.col, self.row
 
 	def get_neighbors(self):
+		"""
+		RETURNS ALL NEIGHBORS OF THE NODE
+		"""
 		return self.neighbors
 
 	def has_been_visited(self):
+		"""
+		IF THE NODE IS MARKED AS VISITED RETURNS TRUE, OTHERWISE FALSE
+		"""
 		return self.visited
 
 	def get_state(self):
+		"""
+		RETURNS CURRENT NODE STATE AS A STRING, BUT IF THE NODE HASN'T GOT ANY STATE, FUNCTION RETURNS PYTHONIC None
+		"""
 		return self.state
 
 	def get_weight(self):
+		"""
+		RETURNS THE NODE WEIGHT, WHICH IS A NUMBER IN RANGE 1-255
+		"""
 		return self.__weight
 
 	# Mutators:
 	def set_visited(self, visited):
+		"""
+		MARKS THE NODE AS VISITED OR UNVISITED, TAKES AS THE ARGUMENT PYTHONIC True OR False
+		"""
 		self.visited = visited
 
 	def change_state(self, state):
+		"""
+		TAKES AS THE ARGUMENT STRING OR PYTHONIC None
+		"""
 		self.state = state
 
 	def set_weight(self, weight):
+		"""
+		TAKES AS THE ARGUMENT WEIGHT, WHICH IS A NUMBER IN RANGE 1-255
+		"""
+
 		info = "ERROR: class Node: __init__ function: following condition isn't met: min_weight <= weight <= max_weight"
 		info += " (" + str(self.minWeight) + " <= " + str(weight) + " <= " + str(self.maxWeight) + ")"
 		assert self.minWeight <= weight <= self.maxWeight, info
@@ -305,6 +381,9 @@ class Node:
 
 	# Others:
 	def update_neighbors(self, graph):
+		"""
+		CALL THE FUNCTION AFTER ALL CHANGES OF ANY NODES OF THE GRAPH IN A FRAME
+		"""
 		self.neighbors = []
 
 		# UP:
@@ -324,6 +403,11 @@ class Node:
 			self.neighbors.append(graph.get_node(self.col + 1, self.row))
 
 	def render_with_state(self):
+		"""
+		RENDER THE NODE IN A COLOR DEPENDING ON ITS STATE
+		IF THE NODE HAS NO STATE, IT IS RENDERED AS IN THE FUNCTION render_without_state
+		"""
+
 		if self.outlineThickness > 0:
 			pg.draw.rect(
 				window, self.outlineColor,
@@ -358,6 +442,11 @@ class Node:
 			)
 
 	def render_without_state(self):
+		"""
+		RENDER THE NODE IN BLACK-AND-WHITE COLORS WITH A SHADE DEPENDING ON ITS WEIGHT
+		THE GREATER THE WEIGHT, THE DARKER COLOR
+		"""
+
 		if self.outlineThickness > 0:
 			pg.draw.rect(
 				window, self.outlineColor,
@@ -403,7 +492,7 @@ class DijkstraComponent:
 class AStarComponent:
 	def __init__(self):
 		self.count = None
-		self.openSet = None
+		self.openSet = PriorityQueue()
 		self.gScore = None
 		self.fScore = None
 		self.openSetHash = None
@@ -427,14 +516,14 @@ class Graph:
 	def __init__(
 			self, x_pos, y_pos, columns_count, rows_count,
 			node_size, node_outline_color, node_outline_thickness,
-			min_nodes_weight, max_nodes_weight, default_nodes_weights
+			min_nodes_weight, max_node_weight, default_nodes_weights
 	):
 		self.xPos = x_pos
 		self.yPos = y_pos
 		self.columnsCount = columns_count
 		self.rowsCount = rows_count
-		self.minNodesWeight = min_nodes_weight
-		self.maxNodesWeight = max_nodes_weight
+		self.minNodeWeight = min_nodes_weight
+		self.maxNodeWeight = max_node_weight
 
 		# constructing nodes:
 		self.nodes = list()
@@ -445,7 +534,7 @@ class Graph:
 					Node(
 						x_pos + x * node_size, y_pos + y * node_size, x, y,
 						node_size, node_outline_color, node_outline_thickness,
-						min_nodes_weight, max_nodes_weight, default_nodes_weights
+						min_nodes_weight, max_node_weight, default_nodes_weights
 					)
 				)
 			self.nodes.append(temp)
@@ -474,7 +563,7 @@ class Graph:
 
 		self.algoComponents = AlgoComponents(columns_count, rows_count)
 
-		self.load_from_file('graph template.txt')
+		self.load_from_file('Graph templates/start.txt')
 
 	# "PRIVATE" METHODS (ARE USED ONLY BY OTHER METHODS OF THIS CLASS):
 	def make_path_step(self):
@@ -553,6 +642,11 @@ class Graph:
 			v_tuple = self.algoComponents.dijkstra.priorityQueue.get()
 			v = v_tuple[1]
 			self.currentlyConsideredPos = v_tuple[1]
+
+			if self.currentlyConsideredPos == self.endPos:
+				self.endFound = True
+				return
+
 			x, y = self.currentlyConsideredPos
 			self.nodes[x][y].set_visited(True)
 			self.safely_change_node_state(x, y, 'ACTIVE')
@@ -569,9 +663,6 @@ class Graph:
 					)
 					x, y = neighbor.get_coordinates()
 					self.safely_change_node_state(x, y, 'IN_QUEUE')
-					if self.endPos == neighbor.get_coordinates():
-						self.endFound = True
-						return
 
 	def make_a_star_step(self):
 		def heuristic(a, b):
@@ -597,8 +688,8 @@ class Graph:
 			current = self.algoComponents.aStar.openSet.get()[2]
 			self.algoComponents.aStar.openSetHash.remove(current)
 			self.currentlyConsideredPos = current.get_coordinates()
-			xe, ye = self.endPos
-			if current == self.nodes[xe][ye]:
+
+			if current.get_coordinates() == self.endPos:
 				self.endFound = True
 				return
 
@@ -610,6 +701,7 @@ class Graph:
 					self.algoComponents.fathersPos[xx][yy] = current.get_coordinates()
 					self.algoComponents.aStar.gScore[neighbor] = temp_g_score
 					self.algoComponents.aStar.fScore[neighbor] = temp_g_score + heuristic(neighbor.get_coordinates(), self.endPos)
+
 					if neighbor not in self.algoComponents.aStar.openSetHash:
 						self.algoComponents.aStar.count += 1
 						self.algoComponents.aStar.openSet.put(
@@ -627,6 +719,11 @@ class Graph:
 
 	# ACCESSORS:
 	def get_node_coordinates(self, mouse_pos):
+		"""
+		RETURNS OVER WHICH COLUMN AND ROW OF THE GRAPH THE MOUSE CURSOR IS LOCATED.
+		NOTICE THAT IF THE MOUSE CURSOR ISN'T OVER THE GRAPH THE FUNCTION WILL RETURN NEGATIVE OR TOO BIG NUMBERS.
+		IN OTHER WORDS, THE FUNCTION DOESN'T CHECK IF THE MOUSE CURSOR IS OVER THE GRAPH.
+		"""
 		x, y = mouse_pos
 		col = (x - self.xPos) // self.nodes[0][0].size
 		row = (y - self.yPos) // self.nodes[0][0].size
@@ -636,17 +733,37 @@ class Graph:
 		return self.nodes[col][row]
 
 	def is_done(self):
+		"""
+		RETURNS TRUE IF ANOTHER CALL OF make_step FUNCTION WOULDN'T CHANGE ANYTHING.
+		IN OTHER WORDS,
+		RETURNS TRUE IF PATH HAS BEEN FOUND OR IF PATH-FINDING PROCESS HAS FAILED, BECAUSE THERE IS NO PATH BETWEEN
+		START AND END NODE.
+
+		IF FUNCTION RETURNS FALSE, IT MEANS THAT THE PATH-FINDING PROCESS WOULD STILL GOING ON (NEXT CALLING make_step
+		FUNCTION WILL CHANGE SOMETHING)
+		"""
+
+		if self.endFound:
+			return self.pathIsDone
+
+		if not self.sthHappened:
+			return False
+
 		if self.algorithm == 'BFS':
-			return self.pathIsDone or (self.sthHappened and self.algoComponents.bfs.queue.empty())
-		elif self.algorithm == 'DFS':
-			return self.pathIsDone or (self.sthHappened and not self.algoComponents.dfs.stack)
-		elif self.algorithm == 'DIJKSTRA':
-			return self.pathIsDone or (self.sthHappened and self.algoComponents.dijkstra.priorityQueue.empty())
-		elif self.algorithm == 'A*':
-			return self.pathIsDone or (self.sthHappened and self.algoComponents.aStar.openSet.empty())
+			return self.algoComponents.bfs.queue.empty()
+		if self.algorithm == 'DFS':
+			return not self.algoComponents.dfs.stack
+		if self.algorithm == 'DIJKSTRA':
+			return self.algoComponents.dijkstra.priorityQueue.empty()
+		if self.algorithm == 'A*':
+			return self.algoComponents.aStar.openSet.empty()
 
 	# MUTATORS:
 	def safely_change_node_state(self, column, row, state):
+		"""
+		SIMPLY CHANGES A NODE STATE, BUT PREVENTS CHANGING STATE OF A NODE, WHICH IS START OR END
+		"""
+
 		if self.nodes[column][row].get_state() != 'START' and self.nodes[column][row].get_state() != 'END':
 			self.nodes[column][row].change_state(state)
 			if state == 'START':
@@ -661,21 +778,42 @@ class Graph:
 				self.nodes[column][row].change_state('END')
 
 	def set_algorithm(self, algorithm):
+		"""
+		TAKES AS THE ARGUMENT A STRING
+		"""
 		self.algorithm = algorithm
 
 	def increase_weight(self, column, row, weight_gain):
+		"""
+		weights_gain ARGUMENT HAVE TO BE NON-NEGATIVE.
+
+		IF NEW WEIGHT WILL BE GREATER THAN maxNodeWeight (WHICH IS THE GRAPH VARIABLE),
+		THEN NEW WEIGHT WILL BE AUTOMATICALLY DECREASED TO THE VALUE OF maxNodeWeight VARIABLE.
+		"""
+
 		assert weight_gain >= 0, "ERROR: increase_weight function:\nArgument weight_gain must be non-negative\n"
 		self.nodes[column][row].set_weight(
 			min(self.nodes[column][row].maxWeight, self.nodes[column][row].get_weight() + weight_gain)
 		)
 
 	def decrease_weight(self, column, row, weight_loss):
+		"""
+		weights_loss ARGUMENT HAVE TO BE NON-NEGATIVE.
+
+		IF NEW WEIGHT WILL BE SMALLER THAN minNodeWeight (WHICH IS THE GRAPH VARIABLE),
+		THEN NEW WEIGHT WILL BE AUTOMATICALLY INCREASED TO THE VALUE OF minNodeWeight VARIABLE.
+		"""
+
 		assert weight_loss >= 0, "ERROR: decrease_weight function:\nArgument weight_gain must be non-negative\n"
 		self.nodes[column][row].set_weight(
 			max(self.nodes[column][row].minWeight, self.nodes[column][row].get_weight() - weight_loss)
 		)
 
 	def reset(self):
+		"""
+		REMOVE ALL PROGRESS IN THE PATH-FINDING PROCESS, RESTORE THE GRAPH TO ITS INITIAL STATE
+		"""
+
 		for x in self.nodes:
 			for y in x:
 				y.set_visited(False)
@@ -691,12 +829,22 @@ class Graph:
 		self.algoComponents = AlgoComponents(self.columnsCount, self.rowsCount)
 
 	def clean_all(self):
+		"""
+		FIRST CALLS reset FUNCTION AND THEN
+		SETS ALL WEIGHTS IN THE GRAPH TO VALUE OF THE minNodeWeight VARIABLE (WHICH IS VARIABLE OF THE GRAPH)
+		"""
 		self.reset()
 		for x in self.nodes:
 			for y in x:
-				y.set_weight(self.minNodesWeight)
+				y.set_weight(self.minNodeWeight)
 
 	def make_random(self):
+		"""
+		CALLS clean_all FUNCTION, SETS START AND END IN A RANDOM POSITIONS AND
+		SETS ALL WEIGHTS TO RANDOM VALUES FROM RANGE <minNodeWeight; maxNodeWeight>
+		(minNodeWeight and maxNodeWeight are the Graph variables)
+		"""
+
 		self.clean_all()
 
 		x, y = self.startPos
@@ -718,16 +866,18 @@ class Graph:
 
 		for x in self.nodes:
 			for y in x:
-				y.set_weight(random.randint(self.minNodesWeight, self.maxNodesWeight))
+				y.set_weight(random.randint(self.minNodeWeight, self.maxNodeWeight))
 				y.set_visited(False)
 
 	# OTHER METHODS:
 	def make_step(self):
-		if self.endFound and not self.pathIsDone:
-			self.make_path_step()
-			return
+		"""
+		MAKE ANOTHER STEP IN PATH-FINDING PROCESS. AFTER CALLING render FUNCTION CHANGES WILL BE VISIBLE.
+		"""
 
-		if self.algorithm == 'BFS':
+		if self.endFound:
+			self.make_path_step()
+		elif self.algorithm == 'BFS':
 			self.make_bfs_step()
 		elif self.algorithm == 'DFS':
 			self.make_dfs_step()
@@ -737,6 +887,10 @@ class Graph:
 			self.make_a_star_step()
 
 	def render(self):
+		"""
+		CALL THE FUNCTION AT THE END OF EVERY FRAME
+		"""
+
 		if not self.is_done():
 			for x in self.nodes:
 				for y in x:
@@ -791,6 +945,21 @@ class Graph:
 		template.close()
 
 
+def init_choice_boxes(graph):
+	x = 2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size
+	algorithm_choice_box = ChoiceBox(
+		x, TOP_MARGIN, 160, 18, 12, GREY224, BLACK, ['BFS', 'DFS', 'DIJKSTRA', 'A*'], 'BFS', 'ALGORITHM:', BLACK
+	)
+	node_action_choice_box = ChoiceBox(
+		x, 2 * TOP_MARGIN + 162, 160, 18, 12, GREY224, BLACK, ['START', 'END', 'INCREASE', 'DECREASE'], 'START',
+		'NODE ACTIONS:', BLACK
+	)
+	on_choice_box = ChoiceBox(
+		x, 3 * TOP_MARGIN + 324, 160, 18, 12, GREY224, BLACK, ['ON', 'OFF'], 'OFF', 'ON/OFF:', BLACK
+	)
+	return algorithm_choice_box, node_action_choice_box, on_choice_box
+
+
 def init_buttons(graph):
 	buttons = []
 	x = 2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size + 30
@@ -829,24 +998,16 @@ def main():
 	clock = pg.time.Clock()
 	graph = Graph(LEFT_MARGIN, TOP_MARGIN, 23, 23, 32, BLACK, 1, 1, 255, 1)
 
-	# "CHOICE BOXES":
-	x = 2 * LEFT_MARGIN + graph.columnsCount * graph.nodes[0][0].size
-	algorithm_choice_box = ChoiceBox(
-		x, TOP_MARGIN, 160, 18, 12, GREY224, BLACK, ['BFS', 'DFS', 'DIJKSTRA', 'A*'], 'BFS', 'ALGORITHM:', BLACK
-	)
-	node_action_choice_box = ChoiceBox(
-		x, 2 * TOP_MARGIN + 162, 160, 18, 12, GREY224, BLACK, ['START', 'END', 'INCREASE', 'DECREASE'], 'START', 'NODE ACTIONS:', BLACK
-	)
-	on_choice_box = ChoiceBox(
-		x, 3 * TOP_MARGIN + 324, 160, 18, 12, GREY224, BLACK, ['ON', 'OFF'], 'OFF', 'ON/OFF:', BLACK
-	)
-
+	algorithm_choice_box, node_action_choice_box, on_choice_box = init_choice_boxes(graph)
 	buttons = init_buttons(graph)
+
 	run = True
 	mouse_pos = None
 
+	# MAIN LOOP, THE ENTIRE PROGRAM RUNS HERE:
 	while run:
-		clock.tick(FPS)
+		clock.tick(FPS)  # TO NOT EXCEED THE FRAMES PER SECOND LIMIT
+
 		for event in pg.event.get():
 			if event.type == pg.QUIT:
 				run = False
@@ -868,14 +1029,14 @@ def main():
 					elif text == 'RANDOM':
 						graph.make_random()
 					elif text == 'SAVE':
-						graph.save_to_file('graph template.txt')
+						graph.save_to_file('Graph templates/saved.txt')
 					elif text == 'LOAD':
-						graph.load_from_file('graph template.txt')
+						graph.load_from_file('Graph templates/saved.txt')
 					elif text == 'MAZE':
-						graph.load_from_file('graph maze template.txt')
+						graph.load_from_file('Graph templates/maze.txt')
 					break
 
-		# UPDATING CHECK BOXES:
+		# UPDATING CHOICE BOXES:
 		algorithm_choice_box.update(mouse_pos)
 		node_action_choice_box.update(mouse_pos)
 		on_choice_box.update(mouse_pos)
