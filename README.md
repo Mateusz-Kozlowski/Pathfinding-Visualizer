@@ -17,7 +17,11 @@ Python 3.8 with following modules installed:
 # 2. Project Description:
 The project supports following algorithms:
 
-<b> BFS </b> (unweighted) O(|V|+|E|)
+<b> BFS </b> runs on <b> unweighted </b> graphs with <b> O(|V|+|E|) </b> complexity. Guarantees the shortest (unweighted) path.
+
+<b> DFS </b> runs on <b> unweighted </b> graphs with <b> O(|V|+|E|) </b> complexity. Doesn't find the shortest path.
+
+<b> BFS </b> runs on <b> unweighted </b> graphs with <b> O(|V|+|E|) </b> complexity. Guarantees the shortest (unweighted) path.
 
 # 3. How to install:
 If you're familiar with git you can clone the repo. Otherwise you can simply download whole project as a compressed folder.
