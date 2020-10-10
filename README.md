@@ -8,7 +8,6 @@ This file includes the following chapters:
 1. Code Requirements
 2. Project description
 3. How to install
-4. Tips
 
 # 1. Code Requirements:
 Python 3.8 with following modules installed:
@@ -17,14 +16,37 @@ Python 3.8 with following modules installed:
 # 2. Project Description:
 The project supports following algorithms:
 
-<b> BFS </b> runs on <b> unweighted </b> graphs with <b> O(|V|+|E|) </b> complexity. Guarantees <b> the shortest (unweighted) </b> path.
+<b> BFS </b> runs on <b> unweighted </b> graphs with <b> O(|V|+|E|) </b> complexity. Guarantees <b> the shortest </b> path.
 
 <b> DFS </b> runs on <b> unweighted </b> graphs with <b> O(|V|+|E|) </b> complexity. Doesn't find the shortest path.
 
-<b> DIJKSTRA </b> runs on <b> weighted </b> graphs with <b> O( (|V|+|E|) * log(|V|) ) </b> complexity. Guarantees <b> the shortest weighted </b> path.
+<b> DIJKSTRA </b> runs on <b> weighted </b> graphs with <b> O( (|V|+|E|) * log(|V|) ) </b> complexity. Guarantees <b> the shortest </b> path.
 
-<b> A* </B>
-  
+<b> A* </b> runs on <b> weighted </b> graphs. Uses heuristics to guarantee </b> the shortest </b> path much <b> faster </b> than Dijkstra's Algorithm.
+
+Contrary to typical graphs, in my project weights are not a feature of edges but of nodes. The more weight a node has, the darker its color is. Completely black nodes are barriers that cannot be crossed. Completely white nodes weigh 1.
+
+If the path between the starting and ending vertices is found or it turns out that no exists, the animation stops by itself. To repeat it, press the RESET button and turn it on again.
+
+You can draw random graphs, create, save and load your own, or use a special maze.
+
+Some screenshots:
+
+![BFS](Screenshots//BFS.png)
+![DFS](Screenshots//DFS.png)
+![DIJKSTRA](Screenshots//DIJKSTRA.png)
+![A STAR](Screenshots//A STAR 1.png)
+![A STAR](Screenshots//A STAR 2.png)
+![DIJKSTRA](Screenshots//RANDOM DIJKSTRA STAR 1.png)
+![DIJKSTRA](Screenshots//RANDOM DIJKSTRA STAR 2.png)
+![DIJKSTRA](Screenshots//RANDOM DIJKSTRA STAR 3.png)
+![A STAR](Screenshots//RANDOM A STAR 1.png)
+![A STAR](Screenshots//RANDOM A STAR 2.png)
+![A STAR](Screenshots//RANDOM A STAR 3.png)
+![DFS](Screenshots//MAZE 1.png)
+![DFS](Screenshots//MAZE 2.png)
+![DFS](Screenshots//MAZE 3.png)
+
 # 3. How to install:
 If you're familiar with git you can clone the repo. Otherwise you can simply download whole project as a compressed folder.
 
@@ -39,7 +61,5 @@ Finally run the program using command line. Navigate to the directory, where the
 
 Wait a few second...
 And you should see sth like that:
-(comming soon!)
 
-# 4. Tips:
-Comming soon! (or rather after the next update, so not soon) 
+![start](Screenshots//start.png)
