@@ -38,7 +38,7 @@ LEFT_MARGIN = 16
 TOP_MARGIN = 16
 WIDTH = 944
 HEIGHT = 768
-TITLE = "PATHFINDING VISUALIZER"
+TITLE = "Pathfinding Visualizer"
 
 window = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption(TITLE)
