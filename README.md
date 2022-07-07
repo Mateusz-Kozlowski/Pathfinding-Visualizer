@@ -1,4 +1,4 @@
--> [LINK TO A VIDEO SHOWING HOW THE PROGRAM EXACTLY WORKS](https://drive.google.com/file/d/1WucY2i3bAHN4ll92v4lWVaRFYBHctSwg/view?usp=sharing) <-
+-> [LINK TO A VIDEO SHOWING HOW THE PROGRAM EXACTLY WORKS](https://youtu.be/jU5uGMs4r_w) <-
 
 # Pathfinding-Visualizer
 
