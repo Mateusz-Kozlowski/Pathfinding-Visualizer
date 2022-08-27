@@ -1,3 +1,5 @@
+![dijkstra](Screenshots//RANDOM_DIJKSTRA_2.png)
+
 -> [LINK TO A VIDEO SHOWING HOW THE PROGRAM EXACTLY WORKS](https://youtu.be/jU5uGMs4r_w) <-
 
 # Pathfinding-Visualizer
